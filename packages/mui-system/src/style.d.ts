@@ -4,7 +4,7 @@ import { StyleFunction } from './Box';
 export type TransformFunction = (
   cssValue: unknown,
   userValue: unknown,
-) => number | string | React.CSSProperties | CSSObject;
+) => number | string | number[] | string[] | React.CSSProperties | CSSObject;
 
 export interface StyleOptions<PropKey> {
   cssProperty?: PropKey | keyof React.CSSProperties | false;
