@@ -1,0 +1,9 @@
+{
+  "extends": "../../tsconfig",
+  "compilerOptions": {
+    "target": "ES2015",
+    "lib": ["es2020", "dom", "ES2021.String"]
+  },
+  "include": ["src/**/*", "test/**/*"],
+  "exclude": ["test/typescript/moduleAugmentation"]
+}

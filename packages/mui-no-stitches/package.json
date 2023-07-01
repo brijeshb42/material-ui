@@ -1,0 +1,65 @@
+{
+  "name": "@mui/no-stitches",
+  "version": "0.0.1-alpha",
+  "private": true,
+  "author": "MUI Team",
+  "description": "Processors to be used with Linaria for zero runtime CSS builds.",
+  "keywords": [
+    "react",
+    "react-component",
+    "mui",
+    "system",
+    "zero-runtime"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mui/material-ui.git",
+    "directory": "packages/mui-system-babel-preset"
+  },
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/mui/material-ui/issues"
+  },
+  "homepage": "https://mui.com/system/getting-started/",
+  "funding": {
+    "type": "opencollective",
+    "url": "https://opencollective.com/mui"
+  },
+  "scripts": {
+    "build": "yarn build:legacy && yarn build:modern && yarn build:node && yarn build:stable && yarn build:types && yarn build:copy-files",
+    "build:legacy": "node ../../scripts/build.mjs legacy",
+    "build:modern": "node ../../scripts/build.mjs modern",
+    "build:node": "node ../../scripts/build.mjs node",
+    "build:stable": "node ../../scripts/build.mjs stable",
+    "build:copy-files": "node ../../scripts/copyFiles.mjs",
+    "build:types": "node ../../scripts/buildTypes.mjs",
+    "prebuild": "rimraf build tsconfig.build.tsbuildinfo",
+    "release": "yarn build && npm publish build",
+    "test": "cd ../../ && cross-env NODE_ENV=test mocha 'packages/mui-system/**/*.test.{js,ts,tsx}'",
+    "typescript": "tslint -p tsconfig.json \"{src,test}/**/*.{spec,d}.{ts,tsx}\" && tsc -p tsconfig.json",
+    "typescript:module-augmentation": "node scripts/testModuleAugmentation.js"
+  },
+  "peerDependencies": {
+    "@stitches/react": "^1.2.8",
+    "typescript": "^4.9.5"
+  },
+  "peerDependenciesMeta": {},
+  "dependencies": {
+    "@babel/types": "^7.22.5",
+    "@linaria/babel-preset": "^4.4.5",
+    "@linaria/tags": "^4.3.5",
+    "lodash.clonedeep": "4.5.0"
+  },
+  "devDependencies": {
+    "@stitches/react": "^1.2.8"
+  },
+  "sideEffects": false,
+  "publishConfig": {
+    "access": "public"
+  },
+  "engines": {
+    "node": ">=12.0.0"
+  },
+  "module": "./index.js",
+  "types": "./index.d.ts"
+}
