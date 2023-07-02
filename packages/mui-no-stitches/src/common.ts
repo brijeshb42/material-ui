@@ -1,5 +1,5 @@
 import { IOptions } from '@linaria/tags';
-import type { DefaultThemeMap } from '@stitches/react';
+import type { DefaultThemeMap, createTheme } from '@stitches/react';
 import { createStitches, defaultThemeMap } from '@stitches/react';
 
 export type VariantToClassMapping = { [key: string]: { [key: string]: string } };
@@ -12,9 +12,14 @@ export type Options = {
   baseClass: string;
   readableVariantClass?: boolean;
   createStitchesConfig?(params: CreateStitchesConfigParam): Parameters<typeof createStitches>[0];
+  themes?: {
+    [key: string]: Parameters<typeof createTheme>[0];
+  };
 };
 
-export type WithStitchesOptions = IOptions & Pick<Options, 'createStitchesConfig'>;
+type OnlyStitchesOptions = Pick<Options, 'createStitchesConfig' | 'themes'>;
+
+export type WithStitchesOptions = IOptions & OnlyStitchesOptions;
 
 function cleanUpCss(css: string, classReplacers: [string, string][]) {
   const rgx = /--sxs\{.*?\}/gim;
@@ -23,16 +28,31 @@ function cleanUpCss(css: string, classReplacers: [string, string][]) {
   }, css.replace(rgx, ''));
 }
 
-function getStitches({ createStitchesConfig }: Pick<Options, 'createStitchesConfig'>) {
+function getStitches({ createStitchesConfig, themes }: OnlyStitchesOptions) {
   const config = createStitchesConfig?.({ defaultThemeMap }) ?? {};
   // @ts-ignore
-  return createStitches({ root: null, ...config });
+  const stitches = createStitches({ root: null, ...config });
+  const createdThemes: Record<string, unknown> = {
+    theme: stitches.theme,
+  };
+
+  if (themes) {
+    Object.keys(themes).forEach((themeKey) => {
+      createdThemes[themeKey] = stitches.createTheme(themes[themeKey]);
+    });
+  }
+
+  return {
+    stitches,
+    themes: createdThemes,
+  };
 }
 
-export function processCssObject(inputCss: Object, options: Options) {
+export function processCssObject(inputCssOrFn: Object | Function, options: Options) {
   const { baseClass: linariaClassname, readableVariantClass = true } = options;
-  const stitches = getStitches(options);
-  console.log(stitches.config);
+  const { stitches, themes } = getStitches(options);
+  const inputCss =
+    typeof inputCssOrFn === 'function' ? inputCssOrFn(themes, stitches) : inputCssOrFn;
   // not sure why, but eval-time objects in Linaria inherit Function object and stitches has explicit checks to only allow objects inheriting "Object". So using "structuredClone".
   const valuedObject = structuredClone(inputCss) as Object & {
     variants?: {
@@ -84,9 +104,13 @@ export function processCssObject(inputCss: Object, options: Options) {
   };
 }
 
-export function processKeyframe(inputKeyframes: Object, options: Options) {
+export function processKeyframe(inputKeyframesOrFn: Object, options: Options) {
   const { baseClass: linariaClassname } = options;
-  const stitches = getStitches(options);
+  const { stitches, themes } = getStitches(options);
+  const inputKeyframes =
+    typeof inputKeyframesOrFn === 'function'
+      ? inputKeyframesOrFn(themes, stitches)
+      : inputKeyframesOrFn;
   const valuedObject = structuredClone(inputKeyframes) as Object;
   const keyframeFn = stitches.keyframes(valuedObject as any);
   const baseClass = keyframeFn();

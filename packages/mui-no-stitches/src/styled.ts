@@ -61,7 +61,7 @@ export default class StyledProcessor extends BaseProcessor {
   build(values: ValueCache): void {
     // @ts-ignore
     const [, , cssObject] = this.params;
-    if (cssObject.kind !== ValueType.LAZY) {
+    if (cssObject.kind === ValueType.CONST) {
       return;
     }
     const builtObject = values.get(cssObject.ex.name) as Object;
