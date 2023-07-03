@@ -13,7 +13,7 @@ type StitchesConfig = {
   };
 };
 
-export type StitchesPluginConfig = LinariaPluginOptions & StitchesConfig;
+export type StitchesPluginConfig = Partial<LinariaPluginOptions> & StitchesConfig;
 
 const baseConfig = {
   babelOptions: {
@@ -24,20 +24,25 @@ const baseConfig = {
     return css;
   },
   tagResolver(source: string, tag: string) {
-    if (!source.startsWith('@mui/no-stitches') && !source.startsWith('@stitches/')) {
+    if (
+      !source.startsWith('@mui/no-stitches') &&
+      !source.startsWith('@stitches/') &&
+      !source.startsWith('no-stitches')
+    ) {
       return null;
     }
+    const isMui = source.startsWith('@mui/no-stitches');
     switch (tag) {
       case 'styled':
-        return '@mui/no-stitches/styled';
+        return `${isMui ? '@mui/' : ''}no-stitches/styled`;
       case 'css':
-        return '@mui/no-stitches/css';
-      case 'keyframes':
-        return '@mui/no-stitches/keyframes';
-      case 'icss':
-        return '@mui/no-stitches/icss';
+        return `${isMui ? '@mui/' : ''}no-stitches/css`;
       case 'globalCss':
-        return '@mui/no-stitches/globalCss';
+        return `${isMui ? '@mui/' : ''}no-stitches/globalCss`;
+      case 'keyframes':
+        return `${isMui ? '@mui/' : ''}no-stitches/keyframes`;
+      case 'icss':
+        return `${isMui ? '@mui/' : ''}no-stitches/icss`;
       default:
         return null;
     }

@@ -123,7 +123,7 @@ export default class CssProcessor extends BaseProcessor {
       }
     }
 
-    const importedStyles = t.addNamedImport('css', '@mui/no-stitches/runtime');
+    const importedStyles = t.addNamedImport('css', 'no-stitches/runtime');
 
     this.replacer(t.callExpression(importedStyles, [t.objectExpression(objectProperties)]), true);
   }

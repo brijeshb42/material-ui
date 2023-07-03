@@ -145,7 +145,7 @@ export default class StyledProcessor extends BaseProcessor {
       }
     }
 
-    const importedStyles = t.addNamedImport('styled', '@mui/no-stitches/runtime');
+    const importedStyles = t.addNamedImport('styled', 'no-stitches/runtime');
 
     const firstArg =
       typeof this.component === 'string'
