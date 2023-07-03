@@ -16,7 +16,10 @@ export default class InlineCssProcessor extends BaseProcessor {
   constructor(params: Params, ...args: TailProcessorParams) {
     super(params, ...args);
 
-    if (this.tagSource.source !== '@mui/no-stitches/runtime') {
+    if (
+      this.tagSource.source !== '@mui/no-stitches/runtime' &&
+      this.tagSource.source !== 'no-stitches/runtime'
+    ) {
       throw BaseProcessor.SKIP;
     }
 

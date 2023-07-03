@@ -24,9 +24,10 @@ export type WithStitchesOptions = IOptions & OnlyStitchesOptions;
 
 function cleanUpCss(css: string, classReplacers: [string, string][]) {
   const rgx = /--sxs\{.*?\}/gim;
-  return classReplacers.reduce((finalCss, [stitchClass, linariaClass]) => {
+  const withoutSxs = classReplacers.reduce((finalCss, [stitchClass, linariaClass]) => {
     return finalCss.replaceAll(stitchClass, linariaClass);
   }, css.replace(rgx, ''));
+  return withoutSxs.replaceAll('@media{}', '');
 }
 
 let stitchesWithThemes: {
@@ -52,6 +53,7 @@ function getStitches({ createStitchesConfig, themes }: OnlyStitchesOptions) {
       stitches: createStitches({ root: null, ...config }),
       themes: stitchesWithThemes.themes,
     };
+    // stitchesWithoutThemes.stitches.reset();
     return stitchesWithoutThemes;
   }
   // @ts-ignore

@@ -18,6 +18,7 @@ export default class GlobalCssProcessor extends BaseProcessor {
 
     if (
       this.tagSource.source !== '@mui/no-stitches/runtime' &&
+      this.tagSource.source !== 'no-stitches/runtime' &&
       this.tagSource.source !== '@stitches/react' &&
       this.tagSource.source !== '@stitches/core'
     ) {

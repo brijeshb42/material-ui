@@ -26,6 +26,7 @@ export default class StyledProcessor extends BaseProcessor {
 
     if (
       this.tagSource.source !== '@mui/no-stitches/runtime' &&
+      this.tagSource.source !== 'no-stitches/runtime' &&
       this.tagSource.source !== '@stitches/react'
     ) {
       throw BaseProcessor.SKIP;

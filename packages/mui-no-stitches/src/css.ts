@@ -23,6 +23,7 @@ export default class CssProcessor extends BaseProcessor {
 
     if (
       this.tagSource.source !== '@mui/no-stitches/runtime' &&
+      this.tagSource.source !== 'no-stitches/runtime' &&
       this.tagSource.source !== '@stitches/react' &&
       this.tagSource.source !== '@stitches/core'
     ) {
@@ -132,15 +133,6 @@ export default class CssProcessor extends BaseProcessor {
   }
 
   get value(): Expression {
-    const t = this.astService;
-    return t.objectExpression([
-      t.objectProperty(t.stringLiteral('displayName'), t.stringLiteral(this.displayName)),
-      t.objectProperty(
-        t.stringLiteral('__linaria'),
-        t.objectExpression([
-          t.objectProperty(t.stringLiteral('className'), t.stringLiteral(this.className)),
-        ]),
-      ),
-    ]);
+    return this.astService.stringLiteral(this.className);
   }
 }

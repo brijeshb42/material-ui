@@ -19,21 +19,23 @@ function cx(...classes) {
   return str;
 }
 
-function getVariantClasses(props, variants, defaults) {
+function getVariantClasses(props, variants, defaults = {}) {
   const finalProps = props || {};
   const deletableKeys = [];
 
-  const classNames = Object.entries(variants).map(([variantName, variantMap]) => {
-    const hasVariantInProps = variantName in finalProps;
-    const propVariantValue = finalProps[variantName];
-    deletableKeys.push(variantName);
-    // delete rest[variantName];
-    const defaultVal = variantMap[defaults[variantName]];
-    if (hasVariantInProps) {
-      return variantMap[propVariantValue] ?? defaultVal;
-    }
-    return defaultVal;
-  });
+  const classNames = variants
+    ? Object.entries(variants).map(([variantName, variantMap]) => {
+        const hasVariantInProps = variantName in finalProps;
+        const propVariantValue = finalProps[variantName];
+        deletableKeys.push(variantName);
+        // delete rest[variantName];
+        const defaultVal = variantMap[defaults[variantName]];
+        if (hasVariantInProps) {
+          return variantMap[propVariantValue] ?? defaultVal;
+        }
+        return defaultVal;
+      })
+    : [];
 
   return {
     classNames,
