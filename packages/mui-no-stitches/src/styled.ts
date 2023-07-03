@@ -24,7 +24,10 @@ export default class StyledProcessor extends BaseProcessor {
   constructor(params: Params, ...args: TailProcessorParams) {
     super(params, ...args);
 
-    if (this.tagSource.source !== '@stitches/react') {
+    if (
+      this.tagSource.source !== '@mui/no-stitches/runtime' &&
+      this.tagSource.source !== '@stitches/react'
+    ) {
       throw BaseProcessor.SKIP;
     }
     validateParams(params, ['callee', 'call'], `Invalid use of ${this.tagSource.imported} tag.`);
@@ -141,7 +144,7 @@ export default class StyledProcessor extends BaseProcessor {
       }
     }
 
-    const importedStyles = t.addNamedImport('styled', './runtime');
+    const importedStyles = t.addNamedImport('styled', '@mui/no-stitches/runtime');
 
     const firstArg =
       typeof this.component === 'string'

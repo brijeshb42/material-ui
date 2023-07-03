@@ -8,21 +8,18 @@ import type {
   TailProcessorParams,
   ValueCache,
 } from '@linaria/tags';
-import { WithStitchesOptions, processKeyframe } from './common';
+import { WithStitchesOptions, processCssObject } from './common';
 
-export default class KeyframesProcessor extends BaseProcessor {
+export default class InlineCssProcessor extends BaseProcessor {
   params: CallParam;
 
   constructor(params: Params, ...args: TailProcessorParams) {
     super(params, ...args);
 
-    if (
-      this.tagSource.source !== '@mui/no-stitches/runtime' &&
-      this.tagSource.source !== '@stitches/react' &&
-      this.tagSource.source !== '@stitches/core'
-    ) {
+    if (this.tagSource.source !== '@mui/no-stitches/runtime') {
       throw BaseProcessor.SKIP;
     }
+
     validateParams(params, ['callee', 'call'], `Invalid use of ${this.tagSource.imported} tag.`);
     const [, callParams] = params;
 
@@ -36,15 +33,16 @@ export default class KeyframesProcessor extends BaseProcessor {
   }
 
   build(values: ValueCache): void {
-    const [, keyframeObject] = this.params;
-    if (keyframeObject.kind !== ValueType.LAZY) {
+    const [, cssObject] = this.params;
+    if (cssObject.kind === ValueType.CONST) {
       return;
     }
-    const builtObject = values.get(keyframeObject.ex.name) as Object;
+    const builtObject = values.get(cssObject.ex.name) as Object;
 
-    const cssText = processKeyframe(builtObject, {
+    const { cssText } = processCssObject(builtObject, {
       baseClass: this.className,
       readableVariantClass: false,
+      isInline: true,
       ...(this.options as WithStitchesOptions),
     });
 

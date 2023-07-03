@@ -21,7 +21,11 @@ export default class CssProcessor extends BaseProcessor {
   constructor(params: Params, ...args: TailProcessorParams) {
     super(params, ...args);
 
-    if (this.tagSource.source !== '@stitches/react') {
+    if (
+      this.tagSource.source !== '@mui/no-stitches/runtime' &&
+      this.tagSource.source !== '@stitches/react' &&
+      this.tagSource.source !== '@stitches/core'
+    ) {
       throw BaseProcessor.SKIP;
     }
     validateParams(params, ['callee', 'call'], `Invalid use of ${this.tagSource.imported} tag.`);
@@ -42,7 +46,7 @@ export default class CssProcessor extends BaseProcessor {
 
   build(values: ValueCache): void {
     const [, cssObject] = this.params;
-    if (cssObject.kind !== ValueType.LAZY) {
+    if (cssObject.kind === ValueType.CONST) {
       return;
     }
     const builtObject = values.get(cssObject.ex.name) as Object;
@@ -118,7 +122,7 @@ export default class CssProcessor extends BaseProcessor {
       }
     }
 
-    const importedStyles = t.addNamedImport('css', './runtime');
+    const importedStyles = t.addNamedImport('css', '@mui/no-stitches/runtime');
 
     this.replacer(t.callExpression(importedStyles, [t.objectExpression(objectProperties)]), true);
   }

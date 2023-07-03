@@ -1,5 +1,5 @@
 import { IOptions } from '@linaria/tags';
-import type { DefaultThemeMap, createTheme } from '@stitches/react';
+import type { CreateStitches, DefaultThemeMap, createTheme } from '@stitches/react';
 import { createStitches, defaultThemeMap } from '@stitches/react';
 
 export type VariantToClassMapping = { [key: string]: { [key: string]: string } };
@@ -11,9 +11,10 @@ export type CreateStitchesConfigParam = {
 export type Options = {
   baseClass: string;
   readableVariantClass?: boolean;
+  isInline?: boolean;
   createStitchesConfig?(params: CreateStitchesConfigParam): Parameters<typeof createStitches>[0];
   themes?: {
-    [key: string]: Parameters<typeof createTheme>[0];
+    [key: string]: Parameters<typeof createTheme>[0] | [string, Parameters<typeof createTheme>[0]];
   };
 };
 
@@ -28,8 +29,31 @@ function cleanUpCss(css: string, classReplacers: [string, string][]) {
   }, css.replace(rgx, ''));
 }
 
+let stitchesWithThemes: {
+  stitches: ReturnType<CreateStitches>;
+  themes: Record<string, unknown>;
+} | null = null;
+let stitchesWithoutThemes: {
+  stitches: ReturnType<CreateStitches>;
+  themes: Record<string, unknown>;
+} | null = null;
+
 function getStitches({ createStitchesConfig, themes }: OnlyStitchesOptions) {
+  if (stitchesWithoutThemes) {
+    return stitchesWithoutThemes;
+  }
+
   const config = createStitchesConfig?.({ defaultThemeMap }) ?? {};
+
+  if (stitchesWithThemes) {
+    delete config.theme;
+    stitchesWithoutThemes = {
+      // @ts-ignore
+      stitches: createStitches({ root: null, ...config }),
+      themes: stitchesWithThemes.themes,
+    };
+    return stitchesWithoutThemes;
+  }
   // @ts-ignore
   const stitches = createStitches({ root: null, ...config });
   const createdThemes: Record<string, unknown> = {
@@ -38,18 +62,30 @@ function getStitches({ createStitchesConfig, themes }: OnlyStitchesOptions) {
 
   if (themes) {
     Object.keys(themes).forEach((themeKey) => {
-      createdThemes[themeKey] = stitches.createTheme(themes[themeKey]);
+      const themeTokens = themes[themeKey];
+      if (Array.isArray(themeTokens) && themeTokens.length !== 2) {
+        throw new Error(
+          `Incorrect number of arguments for theme ${themeKey} provided in config. It accepts exactly 2 arguments.`,
+        );
+      }
+      const theme = Array.isArray(themeTokens)
+        ? stitches.createTheme(...themeTokens)
+        : stitches.createTheme(themeTokens);
+      // call toString for each theme to get it added to the css output.
+      theme.toString();
+      createdThemes[themeKey] = theme;
     });
   }
 
-  return {
+  stitchesWithThemes = {
     stitches,
     themes: createdThemes,
   };
+  return stitchesWithThemes;
 }
 
 export function processCssObject(inputCssOrFn: Object | Function, options: Options) {
-  const { baseClass: linariaClassname, readableVariantClass = true } = options;
+  const { baseClass: linariaClassname, readableVariantClass = true, isInline = false } = options;
   const { stitches, themes } = getStitches(options);
   const inputCss =
     typeof inputCssOrFn === 'function' ? inputCssOrFn(themes, stitches) : inputCssOrFn;
@@ -73,10 +109,10 @@ export function processCssObject(inputCssOrFn: Object | Function, options: Optio
     count += 1;
     return ret;
   };
-  const cls = stitches.css(valuedObject as any);
+  const cls = stitches.css(!isInline ? (valuedObject as any) : undefined);
   const baseClass = cls.toString();
   const classReplacers: [string, string][] = [];
-  cls();
+  const inlineClassNames = cls(isInline ? { css: valuedObject as any } : undefined).toString();
   const variants = valuedObject.variants;
   const variantToClassMapping: VariantToClassMapping = {};
   if (variants) {
@@ -95,16 +131,21 @@ export function processCssObject(inputCssOrFn: Object | Function, options: Optio
       variantToClassMapping[variantName] = mapping;
     });
   }
+  if (isInline) {
+    const inlineClassName = inlineClassNames.split(' ').filter((cls1) => cls1 !== baseClass)[0];
+    classReplacers.push([inlineClassName, linariaClassname]);
+  }
   classReplacers.push([baseClass, linariaClassname]);
-  const cssText = cleanUpCss(stitches.getCssText(), classReplacers);
+  const css = stitches.getCssText();
+  stitches.reset();
   return {
     variantToClassMapping,
-    cssText,
+    cssText: cleanUpCss(css, classReplacers),
     defaultVariants,
   };
 }
 
-export function processKeyframe(inputKeyframesOrFn: Object, options: Options) {
+export function processKeyframe(inputKeyframesOrFn: Object | Function, options: Options) {
   const { baseClass: linariaClassname } = options;
   const { stitches, themes } = getStitches(options);
   const inputKeyframes =
@@ -115,5 +156,19 @@ export function processKeyframe(inputKeyframesOrFn: Object, options: Options) {
   const keyframeFn = stitches.keyframes(valuedObject as any);
   const baseClass = keyframeFn();
   const classReplacers: [string, string][] = [[baseClass, linariaClassname]];
-  return cleanUpCss(stitches.getCssText(), classReplacers);
+  const finalCss = cleanUpCss(stitches.getCssText(), classReplacers);
+  stitches.reset();
+  return finalCss;
+}
+
+export function processGlobalCss(inputCssOrFn: Object | Function, options: Options) {
+  const { stitches, themes } = getStitches(options);
+  const inputCssObj =
+    typeof inputCssOrFn === 'function' ? inputCssOrFn(themes, stitches) : inputCssOrFn;
+  const valuedObject = structuredClone(inputCssObj) as Object;
+  const globalCssFn = stitches.globalCss(valuedObject as any);
+  globalCssFn();
+  const cssText = cleanUpCss(stitches.getCssText(), []);
+  stitches.reset();
+  return cssText;
 }

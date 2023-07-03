@@ -8,9 +8,9 @@ import type {
   TailProcessorParams,
   ValueCache,
 } from '@linaria/tags';
-import { WithStitchesOptions, processKeyframe } from './common';
+import { WithStitchesOptions, processGlobalCss } from './common';
 
-export default class KeyframesProcessor extends BaseProcessor {
+export default class GlobalCssProcessor extends BaseProcessor {
   params: CallParam;
 
   constructor(params: Params, ...args: TailProcessorParams) {
@@ -36,13 +36,13 @@ export default class KeyframesProcessor extends BaseProcessor {
   }
 
   build(values: ValueCache): void {
-    const [, keyframeObject] = this.params;
-    if (keyframeObject.kind !== ValueType.LAZY) {
+    const [, globalCssObj] = this.params;
+    if (globalCssObj.kind === ValueType.CONST) {
       return;
     }
-    const builtObject = values.get(keyframeObject.ex.name) as Object;
+    const builtObject = values.get(globalCssObj.ex.name) as Object;
 
-    const cssText = processKeyframe(builtObject, {
+    const cssText = processGlobalCss(builtObject, {
       baseClass: this.className,
       readableVariantClass: false,
       ...(this.options as WithStitchesOptions),
@@ -89,6 +89,6 @@ export default class KeyframesProcessor extends BaseProcessor {
   }
 
   get value(): Expression {
-    return this.astService.stringLiteral(this.className);
+    return this.astService.stringLiteral('');
   }
 }
