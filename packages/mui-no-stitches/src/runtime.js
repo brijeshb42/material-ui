@@ -48,7 +48,7 @@ export function styled(tag, options = {}) {
 
   const StyledComponent = React.forwardRef(
     // eslint-disable-next-line react/prop-types
-    ({ as: asProp, className, css: cssClassName, ...rest }, ref) => {
+    ({ as: asProp, className, css: cssClassName, ownerState, ...rest }, ref) => {
       const FinalComponent = asProp ?? tag;
       const { classNames: variantClasses, deletableKeys } = getVariantClasses(
         rest,
@@ -59,11 +59,15 @@ export function styled(tag, options = {}) {
         delete rest[key];
       });
       const finalClass = cx(initClass, ...variantClasses, className, cssClassName);
-      return <FinalComponent {...rest} className={finalClass} ref={ref} />;
+      if (typeof FinalComponent === 'string' || !FinalComponent.isStitchesStyled) {
+        return <FinalComponent {...rest} className={finalClass} ref={ref} />;
+      }
+      return <FinalComponent {...rest} ownerState={ownerState} className={finalClass} ref={ref} />;
     },
   );
 
   StyledComponent.displayName = name;
+  StyledComponent.isStitchesStyled = true;
 
   return StyledComponent;
 }

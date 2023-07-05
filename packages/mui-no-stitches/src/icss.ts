@@ -26,9 +26,9 @@ export default class InlineCssProcessor extends BaseProcessor {
     validateParams(params, ['callee', 'call'], `Invalid use of ${this.tagSource.imported} tag.`);
     const [, callParams] = params;
 
-    if (callParams.length !== 2) {
+    if (callParams.length < 2 || callParams.length > 3) {
       throw new Error(
-        `Invalid use of ${this.tagSource.imported} tag. It should have exactly one argument.`,
+        `Invalid use of ${this.tagSource.imported} tag. It can have minimum 1 and max 2 arguments.`,
       );
     }
 
@@ -36,16 +36,24 @@ export default class InlineCssProcessor extends BaseProcessor {
   }
 
   build(values: ValueCache): void {
-    const [, cssObject] = this.params;
+    const [, cssObject, styledObj] = this.params;
     if (cssObject.kind === ValueType.CONST) {
       return;
     }
     const builtObject = values.get(cssObject.ex.name) as Object;
+    let overrideClassName: string | undefined;
+
+    if (styledObj && styledObj.kind === ValueType.LAZY) {
+      const value = values.get(styledObj.ex.name) as { __linaria?: { className: string } };
+      // eslint-disable-next-line no-underscore-dangle
+      overrideClassName = value.__linaria?.className;
+    }
 
     const { cssText } = processCssObject(builtObject, {
       baseClass: this.className,
       readableVariantClass: false,
       isInline: true,
+      overrideClassName,
       ...(this.options as WithStitchesOptions),
     });
 

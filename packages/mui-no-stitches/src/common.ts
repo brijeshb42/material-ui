@@ -12,6 +12,7 @@ export type Options = {
   baseClass: string;
   readableVariantClass?: boolean;
   isInline?: boolean;
+  overrideClassName?: string;
   createStitchesConfig?(params: CreateStitchesConfigParam): Parameters<typeof createStitches>[0];
   themes?: {
     [key: string]: Parameters<typeof createTheme>[0] | [string, Parameters<typeof createTheme>[0]];
@@ -87,8 +88,16 @@ function getStitches({ createStitchesConfig, themes }: OnlyStitchesOptions) {
 }
 
 export function processCssObject(inputCssOrFn: Object | Function, options: Options) {
-  const { baseClass: linariaClassname, readableVariantClass = true, isInline = false } = options;
+  const {
+    baseClass: linariaClassname,
+    readableVariantClass = true,
+    isInline = false,
+    overrideClassName = undefined,
+  } = options;
   const { stitches, themes } = getStitches(options);
+  const replacerClassName = overrideClassName
+    ? `${overrideClassName}.${linariaClassname}`
+    : linariaClassname;
   const inputCss =
     typeof inputCssOrFn === 'function' ? inputCssOrFn(themes, stitches) : inputCssOrFn;
   // not sure why, but eval-time objects in Linaria inherit Function object and stitches has explicit checks to only allow objects inheriting "Object". So using "structuredClone".
@@ -135,9 +144,9 @@ export function processCssObject(inputCssOrFn: Object | Function, options: Optio
   }
   if (isInline) {
     const inlineClassName = inlineClassNames.split(' ').filter((cls1) => cls1 !== baseClass)[0];
-    classReplacers.push([inlineClassName, linariaClassname]);
+    classReplacers.push([inlineClassName, replacerClassName]);
   }
-  classReplacers.push([baseClass, linariaClassname]);
+  classReplacers.push([baseClass, replacerClassName]);
   const css = stitches.getCssText();
   stitches.reset();
   return {

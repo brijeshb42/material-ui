@@ -1,6 +1,6 @@
 {
   "name": "@mui/no-stitches",
-  "version": "0.0.1-alpha.1",
+  "version": "0.0.1-alpha.4",
   "private": false,
   "description": "Processors to be used with Linaria for zero runtime CSS builds using stitches at build-time.",
   "keywords": [
@@ -24,7 +24,7 @@
     "typescript:module-augmentation": "node scripts/testModuleAugmentation.js"
   },
   "peerDependencies": {
-    "react": "^16.3.0",
+    "react": "^16.3.0 || ^17.0.0 || ^18.0.0",
     "@linaria/vite": "^4.2.11",
     "next-with-linaria": "^0.5.1"
   },
