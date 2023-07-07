@@ -1,5 +1,5 @@
 import { IOptions } from '@linaria/tags';
-import type { CreateStitches, DefaultThemeMap, createTheme } from '@stitches/react';
+import type { DefaultThemeMap, createTheme } from '@stitches/react';
 import { createStitches, defaultThemeMap } from '@stitches/react';
 
 export type VariantToClassMapping = { [key: string]: { [key: string]: string } };
@@ -32,12 +32,12 @@ function cleanUpCss(css: string, classReplacers: [string, string][]) {
 }
 
 let stitchesWithThemes: {
-  stitches: ReturnType<CreateStitches>;
-  themes: Record<string, unknown>;
+  stitches: any;
+  themes: any;
 } | null = null;
 let stitchesWithoutThemes: {
-  stitches: ReturnType<CreateStitches>;
-  themes: Record<string, unknown>;
+  stitches: any;
+  themes: any;
 } | null = null;
 
 function getStitches({ createStitchesConfig, themes }: OnlyStitchesOptions) {
@@ -100,6 +100,7 @@ export function processCssObject(inputCssOrFn: Object | Function, options: Optio
     : linariaClassname;
   const inputCss =
     typeof inputCssOrFn === 'function' ? inputCssOrFn(themes, stitches) : inputCssOrFn;
+  const stitchClassSet = new Set<string>();
   // not sure why, but eval-time objects in Linaria inherit Function object and stitches has explicit checks to only allow objects inheriting "Object". So using "structuredClone".
   const valuedObject = structuredClone(inputCss) as Object & {
     variants?: {
@@ -110,9 +111,17 @@ export function processCssObject(inputCssOrFn: Object | Function, options: Optio
     defaultVariants?: {
       [key: string]: string;
     };
+    compoundVariants?: [
+      {
+        [key: string]: unknown;
+        css?: Object;
+      },
+    ];
   };
   const defaultVariants = valuedObject.defaultVariants;
+  const compoundVariants = valuedObject.compoundVariants;
   delete valuedObject.defaultVariants;
+  delete valuedObject.compoundVariants;
 
   let count = 1;
   const getCount = () => {
@@ -123,7 +132,7 @@ export function processCssObject(inputCssOrFn: Object | Function, options: Optio
   const cls = stitches.css(!isInline ? (valuedObject as any) : undefined);
   const baseClass = cls.toString();
   const classReplacers: [string, string][] = [];
-  const inlineClassNames = cls(isInline ? { css: valuedObject as any } : undefined).toString();
+
   const variants = valuedObject.variants;
   const variantToClassMapping: VariantToClassMapping = {};
   if (variants) {
@@ -131,18 +140,55 @@ export function processCssObject(inputCssOrFn: Object | Function, options: Optio
       const mapping: { [key: string]: string } = {};
       variantToClassMapping[variantName] = {};
       Object.keys(variants[variantName]).forEach((variantType) => {
-        const variantClasses = cls({ [variantName]: variantType }).toString();
+        const variantClasses: string = cls({ [variantName]: variantType }).toString();
+
         const variantClass = variantClasses.split(' ').filter((cls1) => cls1 !== baseClass)[0];
         const linariaClass = readableVariantClass
           ? `${linariaClassname}-${variantName}-${variantType}`
           : `${linariaClassname}-${getCount()}`;
+        stitchClassSet.add(variantClass);
         classReplacers.push([variantClass, linariaClass]);
         mapping[variantType] = linariaClass;
       });
       variantToClassMapping[variantName] = mapping;
     });
   }
+
+  // let css = stitches.getCssText();
+
+  const modVariants: { [key: string]: unknown; css: string }[] = [];
+  if (variants && compoundVariants?.length) {
+    const cls1 = stitches.css({
+      variants: Object.entries(variants).reduce((acc, [variantType, variantObj]) => {
+        acc[variantType] = acc[variantType] ?? {};
+        Object.keys(variantObj).forEach((variantName) => {
+          acc[variantType][variantName] = {};
+        });
+        return acc;
+      }, {} as Record<string, Record<string, unknown>>),
+      compoundVariants,
+    });
+    compoundVariants.forEach(({ css, ...rest }, index) => {
+      if (!css) {
+        return;
+      }
+      const toReplaceClass = readableVariantClass
+        ? `${linariaClassname}-cv-${index}`
+        : `${linariaClassname}-${getCount()}`;
+      const variantClass = cls1(rest).toString();
+      modVariants.push({
+        ...rest,
+        css: toReplaceClass,
+      });
+
+      classReplacers.push([variantClass.split(' ').pop(), toReplaceClass]);
+    });
+  }
+
   if (isInline) {
+    const inlineClassNames: string = cls(
+      isInline ? { css: valuedObject as any } : undefined,
+    ).toString();
     const inlineClassName = inlineClassNames.split(' ').filter((cls1) => cls1 !== baseClass)[0];
     classReplacers.push([inlineClassName, replacerClassName]);
   }
@@ -153,6 +199,7 @@ export function processCssObject(inputCssOrFn: Object | Function, options: Optio
     variantToClassMapping,
     cssText: cleanUpCss(css, classReplacers),
     defaultVariants,
+    compoundVariants: modVariants,
   };
 }
 

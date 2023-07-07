@@ -1,13 +1,13 @@
-import { BaseProcessor, ValueType, validateParams } from '@linaria/tags';
+import { BaseProcessor, validateParams } from '@linaria/tags';
 import type {
   CallParam,
   Expression,
   Params,
-  Replacements,
   Rules,
   TailProcessorParams,
   ValueCache,
 } from '@linaria/tags';
+import { ValueType, type Replacements } from '@linaria/utils';
 import { WithStitchesOptions, processKeyframe } from './common';
 
 export default class KeyframesProcessor extends BaseProcessor {

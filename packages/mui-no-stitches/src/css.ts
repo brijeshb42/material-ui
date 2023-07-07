@@ -1,14 +1,14 @@
 import { ObjectProperty } from '@babel/types';
-import { BaseProcessor, ValueType, validateParams } from '@linaria/tags';
+import { BaseProcessor, validateParams } from '@linaria/tags';
 import type {
   CallParam,
   Expression,
   Params,
-  Replacements,
   Rules,
   TailProcessorParams,
   ValueCache,
 } from '@linaria/tags';
+import { type Replacements, ValueType } from '@linaria/utils';
 import { WithStitchesOptions, processCssObject } from './common';
 
 export default class CssProcessor extends BaseProcessor {

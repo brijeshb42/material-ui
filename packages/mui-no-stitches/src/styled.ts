@@ -1,16 +1,30 @@
+import type { types as BabelType } from '@babel/core';
 import { ObjectProperty } from '@babel/types';
-import { BaseProcessor, ValueType, validateParams } from '@linaria/tags';
+import { BaseProcessor, validateParams } from '@linaria/tags';
 import type {
   CallParam,
   Expression,
   Params,
-  Replacements,
   Rules,
   TailProcessorParams,
   ValueCache,
   WrappedNode,
 } from '@linaria/tags';
+import { ValueType, type Replacements } from '@linaria/utils';
 import { WithStitchesOptions, processCssObject } from './common';
+
+function getValueLiteral(value: unknown, ast: typeof BabelType) {
+  switch (typeof value) {
+    case 'string':
+      return ast.stringLiteral(value);
+    case 'number':
+      return ast.numericLiteral(value);
+    case 'boolean':
+      return ast.booleanLiteral(value);
+    default:
+      return ast.nullLiteral();
+  }
+}
 
 export default class StyledProcessor extends BaseProcessor {
   public component: WrappedNode;
@@ -20,6 +34,8 @@ export default class StyledProcessor extends BaseProcessor {
   defaultVariants?: { [key: string]: string };
 
   variantToClassMapping: { [key: string]: { [key: string]: string } } = {};
+
+  compoundVariants: { css: string; [key: string]: unknown }[] = [];
 
   constructor(params: Params, ...args: TailProcessorParams) {
     super(params, ...args);
@@ -70,13 +86,17 @@ export default class StyledProcessor extends BaseProcessor {
     }
     const builtObject = values.get(cssObject.ex.name) as Object;
 
-    const { cssText, defaultVariants, variantToClassMapping } = processCssObject(builtObject, {
-      baseClass: this.className,
-      readableVariantClass: false,
-      ...(this.options as WithStitchesOptions),
-    });
+    const { cssText, defaultVariants, variantToClassMapping, compoundVariants } = processCssObject(
+      builtObject,
+      {
+        baseClass: this.className,
+        readableVariantClass: false,
+        ...(this.options as WithStitchesOptions),
+      },
+    );
     this.defaultVariants = defaultVariants;
     this.variantToClassMapping = variantToClassMapping;
+    this.compoundVariants = compoundVariants;
 
     const cssRules: Rules = {
       [this.asSelector]: {
@@ -143,6 +163,23 @@ export default class StyledProcessor extends BaseProcessor {
       if (a.length) {
         objectProperties.push(t.objectProperty(t.identifier('defaults'), t.objectExpression(a)));
       }
+    }
+
+    if (this.compoundVariants.length) {
+      objectProperties.push(
+        t.objectProperty(
+          t.identifier('compound'),
+          t.arrayExpression(
+            this.compoundVariants.map((variant) => {
+              return t.objectExpression(
+                Object.entries(variant).map(([key, value]) => {
+                  return t.objectProperty(t.identifier(key), getValueLiteral(value, t));
+                }),
+              );
+            }),
+          ),
+        ),
+      );
     }
 
     const importedStyles = t.addNamedImport('styled', 'no-stitches/runtime');

@@ -1,6 +1,6 @@
 {
   "name": "@mui/no-stitches",
-  "version": "0.0.1-alpha.4",
+  "version": "0.0.1-alpha.6",
   "private": false,
   "description": "Processors to be used with Linaria for zero runtime CSS builds using stitches at build-time.",
   "keywords": [
@@ -25,21 +25,22 @@
   },
   "peerDependencies": {
     "react": "^16.3.0 || ^17.0.0 || ^18.0.0",
-    "@linaria/vite": "^4.2.11",
+    "@linaria/vite": "^4.5.4",
     "next-with-linaria": "^0.5.1"
   },
   "peerDependenciesMeta": {},
   "dependencies": {
     "@babel/types": "^7.22.5",
-    "@linaria/babel-preset": "^4.4.5",
-    "@linaria/tags": "^4.3.5",
+    "@linaria/babel-preset": "^4.5.4",
+    "@linaria/tags": "^4.5.4",
+    "@linaria/utils": "^4.5.3",
     "@stitches/react": "^1.2.8"
   },
   "devDependencies": {
     "@stitches/react": "^1.2.8",
-    "@linaria/vite": "^4.2.11",
+    "@linaria/vite": "^4.5.4",
     "next-with-linaria": "^0.5.1",
-    "vite": "^4.3.9"
+    "vite": "^4.4.8"
   },
   "sideEffects": false,
   "publishConfig": {
@@ -49,5 +50,14 @@
     "node": ">=12.0.0"
   },
   "module": "./index.js",
-  "types": "./index.d.ts"
+  "types": "./index.d.ts",
+  "linaria": {
+    "tags": {
+      "styled": "./styled.js",
+      "css": "./css.js",
+      "globalCss": "./globalCss.js",
+      "icss": "./icss.js",
+      "keyframes": "./keyframes.js"
+    }
+  }
 }

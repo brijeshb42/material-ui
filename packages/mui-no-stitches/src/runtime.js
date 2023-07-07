@@ -19,9 +19,10 @@ function cx(...classes) {
   return str;
 }
 
-function getVariantClasses(props, variants, defaults = {}) {
+function getVariantClasses(props, variants, defaults = {}, compound = undefined) {
   const finalProps = props || {};
   const deletableKeys = [];
+  const finalVariants = {};
 
   const classNames = variants
     ? Object.entries(variants).map(([variantName, variantMap]) => {
@@ -31,11 +32,23 @@ function getVariantClasses(props, variants, defaults = {}) {
         // delete rest[variantName];
         const defaultVal = variantMap[defaults[variantName]];
         if (hasVariantInProps) {
+          finalVariants[variantName] = propVariantValue ?? defaults[variantName];
           return variantMap[propVariantValue] ?? defaultVal;
         }
+        finalVariants[variantName] = defaults[variantName];
         return defaultVal;
       })
     : [];
+
+  if (compound?.length) {
+    classNames.push(
+      ...compound
+        .filter(({ css: cssClass, ...restVariants }) =>
+          Object.entries(restVariants).every(([key, value]) => finalVariants[key] === value),
+        )
+        .map((item) => item.css),
+    );
+  }
 
   return {
     classNames,
@@ -44,7 +57,7 @@ function getVariantClasses(props, variants, defaults = {}) {
 }
 
 export function styled(tag, options = {}) {
-  const { class: initClass, name, variants = {}, defaults = {} } = options;
+  const { class: initClass, name, variants = {}, defaults = {}, compound } = options;
 
   const StyledComponent = React.forwardRef(
     // eslint-disable-next-line react/prop-types
@@ -54,11 +67,12 @@ export function styled(tag, options = {}) {
         rest,
         variants,
         defaults,
+        compound,
       );
       deletableKeys.forEach((key) => {
         delete rest[key];
       });
-      const finalClass = cx(initClass, ...variantClasses, className, cssClassName);
+      const finalClass = cx(className, initClass, ...variantClasses, cssClassName);
       if (typeof FinalComponent === 'string' || !FinalComponent.isStitchesStyled) {
         return <FinalComponent {...rest} className={finalClass} ref={ref} />;
       }
@@ -83,7 +97,7 @@ export function css({ class: baseClass, variants, defaults }) {
  * @param {import('@stitches/react').CSS} css
  * @returns {import('@stitches/react').CSS}
  */
-export function icx() {
+export function icss() {
   throw new Error(
     'Usage of "icx" should not end up in your runtime. If you are seeing this error, please check your build tool configuration.',
   );

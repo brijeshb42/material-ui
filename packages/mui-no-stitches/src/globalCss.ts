@@ -1,13 +1,14 @@
-import { BaseProcessor, ValueType, validateParams } from '@linaria/tags';
+import { BaseProcessor, validateParams } from '@linaria/tags';
 import type {
   CallParam,
   Expression,
   Params,
-  Replacements,
   Rules,
   TailProcessorParams,
   ValueCache,
 } from '@linaria/tags';
+import type { Replacements } from '@linaria/utils';
+import { ValueType } from '@linaria/utils';
 import { WithStitchesOptions, processGlobalCss } from './common';
 
 export default class GlobalCssProcessor extends BaseProcessor {
@@ -82,7 +83,7 @@ export default class GlobalCssProcessor extends BaseProcessor {
   }
 
   doRuntimeReplacement(): void {
-    this.replacer(this.value, false);
+    this.replacer(this.astService.nullLiteral(), false);
   }
 
   public override get asSelector(): string {
