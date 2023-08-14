@@ -106,7 +106,7 @@ export default function App() {
         </div>
       </div>
       <div>
-        <HalfWidth sx={{ color: 'red' }}>
+        <HalfWidth sx={{ color: 'primary.main' }}>
           <Slider
             aria-label="Small steps"
             defaultValue={50}
