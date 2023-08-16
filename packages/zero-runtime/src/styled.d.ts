@@ -1,15 +1,5 @@
-// @TODO - Implement correct style definitions
+import type { CreateStyled } from './types/styled';
 
-type HTMLElements = keyof JSX.IntrinsicElements;
-interface StyledFn {
-  (...args: any[]): any;
-}
-type StyledIndex = {
-  [key in HTMLElements]: (...args: any[]) => any;
-};
-
-type Styled = StyledFn & StyledIndex;
-
-declare const styled: Styled;
-
+export * from './types/styled';
+declare const styled: CreateStyled;
 export default styled;

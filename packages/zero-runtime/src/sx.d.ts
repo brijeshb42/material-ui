@@ -1,2 +1,3 @@
-// @TODO - Implement correct style definitions
-export default function sx<T>(arg: T): T;
+import type * as CSS from 'csstype';
+
+export default function sx<StyleArg extends CSS.Properties>(arg: StyleArg): string;
