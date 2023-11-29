@@ -1,5 +1,6 @@
 import * as React from 'react';
 import { styled } from '@mui/system';
+import { styled as zeroStyled } from '@brijeshb42/zero-runtime';
 import { Tabs } from '@mui/base/Tabs';
 import { TabsList } from '@mui/base/TabsList';
 import { TabPanel } from '@mui/base/TabPanel';
@@ -31,39 +32,26 @@ const grey = {
   900: '#24292f',
 };
 
-const StyledTab = styled(Tab)`
-  font-family: 'IBM Plex Sans', sans-serif;
-  color: #fff;
-  cursor: pointer;
-  font-size: 0.875rem;
-  font-weight: 600;
-  background-color: transparent;
-  width: 100%;
-  padding: 10px 12px;
-  margin: 6px;
-  border: none;
-  border-radius: 7px;
-  display: flex;
-  justify-content: center;
+const StyledTab = zeroStyled(Tab)({
+  fontFamily: "'IBM Plex Sans', sans-serif",
+  color: '#fff',
+  cursor: 'pointer',
+  fontSize: '0.875rem',
+  fontWeight: 600,
+  backgroundColor: 'transparent',
+  width: '100%',
+  padding: '10px 12px',
+  margin: '6px',
+  border: 'none',
+  borderRadius: '7px',
+  display: 'flex',
+  justifyContent: 'center',
 
-  &:hover {
-    background-color: ${blue[400]};
-  }
-
-  &:focus {
-    color: #fff;
-    outline: 3px solid ${blue[200]};
-  }
-
-  &.${tabClasses.selected} {
-    background-color: #fff;
-    color: ${blue[600]};
-  }
-
-  &.${tabClasses.disabled} {
-    opacity: 0.5;
-  }
-`;
+  '&:hover': { backgroundColor: blue[400] },
+  '&:focus': { color: '#fff', outline: `3px solid ${blue[200]}` },
+  [`&.${tabClasses.selected}`]: { backgroundColor: '#fff', color: blue[600] },
+  [`&.${tabClasses.disabled}`]: { opacity: 0.5 },
+});
 
 const StyledTabPanel = styled(TabPanel)(
   ({ theme }) => `
