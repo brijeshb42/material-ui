@@ -1,0 +1,14 @@
+diff --git a/node_modules/next/dist/server/lib/start-server.js b/node_modules/next/dist/server/lib/start-server.js
+index d72e9fb..f2411bf 100644
+--- a/node_modules/next/dist/server/lib/start-server.js
++++ b/node_modules/next/dist/server/lib/start-server.js
+@@ -165,7 +165,8 @@ async function startServer({ dir , port , isDev , hostname , minimalMode , allow
+                 process.env.PORT = port + "";
+             }
+             try {
+-                const cleanup = ()=>{
++                const cleanup = (err)=>{
++                    console.error(err);
+                     debug("start-server process cleanup");
+                     server.close();
+                     process.exit(0);
