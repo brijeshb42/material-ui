@@ -71,7 +71,8 @@
     "typescript": "lerna run --no-bail --parallel typescript",
     "typescript:ci": "lerna run --concurrency 5 --no-bail --no-sort typescript",
     "validate-declarations": "ts-node --esm scripts/validateTypescriptDeclarations.mts",
-    "generate-codeowners": "node scripts/generateCodeowners.mjs"
+    "generate-codeowners": "node scripts/generateCodeowners.mjs",
+    "postinstall": "patch-package"
   },
   "devDependencies": {
     "@argos-ci/core": "^0.12.0",
@@ -151,6 +152,7 @@
     "mocha": "^10.2.0",
     "nx": "^16.10.0",
     "nyc": "^15.1.0",
+    "patch-package": "^8.0.0",
     "piscina": "^4.2.0",
     "postcss-styled-syntax": "^0.5.0",
     "prettier": "^2.8.8",
