@@ -118,7 +118,7 @@
   "devDependencies": {
     "@babel/plugin-transform-react-constant-elements": "^7.23.3",
     "@babel/preset-typescript": "^7.23.3",
-    "@brijeshb42/zero-next-plugin": "0.0.1-alpha.3",
+    "@brijeshb42/zero-next-plugin": "0.0.1-alpha.5",
     "@mui-internal/docs-utilities": "^1.0.0",
     "@mui-internal/test-utils": "^1.0.0",
     "@types/autosuggest-highlight": "^3.2.3",

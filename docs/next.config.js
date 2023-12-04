@@ -255,7 +255,6 @@ module.exports = withZeroPlugin(
     transformSx: false,
     displayName: true,
     babelOptions: {
-      presets: babelConfig.presets,
       plugins: [babelConfig.plugins[babelConfig.plugins.length - 1]],
       babelrc: false,
     },
@@ -266,6 +265,5 @@ module.exports = withZeroPlugin(
       happyDOM: false,
       useBabelConfigs: false,
     },
-    exclude: ['node_modules/next', 'babel-plugin-macros'],
   },
 );

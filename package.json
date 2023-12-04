@@ -191,7 +191,8 @@
     "**/@definitelytyped/utils": "^0.0.188",
     "**/@types/node": "^18.18.13",
     "**/@types/react": "^18.2.38",
-    "**/cross-fetch": "^4.0.0"
+    "**/cross-fetch": "^4.0.0",
+    "@linaria/babel-preset": "^5.0.4"
   },
   "nyc": {
     "include": [
