@@ -1,7 +1,7 @@
 import * as React from 'react';
-import Head from 'docs/src/modules/components/Head';
+import Head from '@mui/docs/Head';
 import TeamApp from 'docs/data/joy/getting-started/templates/team/App';
-import { NextNProgressBar } from 'docs/src/modules/components/AppFrame';
+import { NextNProgressBar } from '@mui/docs/AppFrame';
 
 export default function Team() {
   return (

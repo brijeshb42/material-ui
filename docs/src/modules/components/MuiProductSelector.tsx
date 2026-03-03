@@ -6,16 +6,16 @@ import Typography from '@mui/material/Typography';
 import Divider from '@mui/material/Divider';
 import MenuList, { MenuListProps } from '@mui/material/MenuList';
 import MenuItem, { MenuItemProps } from '@mui/material/MenuItem';
-import ROUTES from 'docs/src/route';
-import PageContext from 'docs/src/modules/components/PageContext';
-import SvgMuiLogomark from 'docs/src/icons/SvgMuiLogomark';
-import SvgBaseUiLogo from 'docs/src/icons/SvgBaseUiLogo';
 import BackupTableRoundedIcon from '@mui/icons-material/BackupTableRounded';
 import CalendarMonthRoundedIcon from '@mui/icons-material/CalendarMonthRounded';
 import AccountTreeRoundedIcon from '@mui/icons-material/AccountTreeRounded';
 import BarChartRoundedIcon from '@mui/icons-material/BarChartRounded';
 import StyleRoundedIcon from '@mui/icons-material/StyleRounded';
 import WebRoundedIcon from '@mui/icons-material/WebRounded';
+import SvgBaseUiLogo from '@mui/docs/icons/SvgBaseUiLogo';
+import SvgMuiLogomark from '@mui/docs/icons/SvgMuiLogomark';
+import PageContext from '@mui/docs/PageContext';
+import ROUTES from '../../route';
 
 const iconStyles = (theme: Theme) => ({
   fontSize: '.875rem',

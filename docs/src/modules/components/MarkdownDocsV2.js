@@ -6,14 +6,14 @@ import { exactProp } from '@mui/utils';
 import { Ad, AdGuest } from '@mui/docs/Ad';
 import ComponentsApiContent from 'docs/src/modules/components/ComponentsApiContent';
 import HooksApiContent from 'docs/src/modules/components/HooksApiContent';
-import { getTranslatedHeader as getComponentTranslatedHeader } from 'docs/src/modules/components/ApiPage';
-import RichMarkdownElement from 'docs/src/modules/components/RichMarkdownElement';
-import AppLayoutDocs from 'docs/src/modules/components/AppLayoutDocs';
+import { getTranslatedHeader as getComponentTranslatedHeader } from '@mui/docs/ApiPage';
+import RichMarkdownElement from '@mui/docs/RichMarkdownElement';
+import AppLayoutDocs from '@mui/docs/AppLayoutDocs';
 import { useTranslate, useUserLanguage } from '@mui/docs/i18n';
-import { HEIGHT as AppFrameHeight } from 'docs/src/modules/components/AppFrame';
+import { HEIGHT as AppFrameHeight } from '@mui/docs/AppFrame';
 import { HEIGHT as TabsHeight } from 'docs/src/modules/components/ComponentPageTabs';
-import { getPropsToC } from 'docs/src/modules/components/ApiPage/sections/PropertiesSection';
-import { getClassesToc } from 'docs/src/modules/components/ApiPage/sections/ClassesSection';
+import { getPropsToC } from '@mui/docs/ApiPage/sections/PropertiesSection';
+import { getClassesToc } from '@mui/docs/ApiPage/sections/ClassesSection';
 
 function getHookTranslatedHeader(t, header) {
   const translations = {

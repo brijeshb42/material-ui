@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { deepmerge } from '@mui/utils';
+import deepmerge from '@mui/utils/deepmerge';
 import {
   CssVarsProvider as JoyCssVarsProvider,
   useColorScheme as useJoyColorScheme,
@@ -8,7 +8,7 @@ import {
 } from '@mui/joy/styles';
 import { ThemeProvider, createTheme, useTheme } from '@mui/material/styles';
 import { ThemeOptionsContext, highDensity } from '@mui/docs/ThemeContext';
-import BrandingCssVarsProvider from './BrandingCssVarsProvider';
+import BrandingCssVarsProvider from '@mui/docs/BrandingCssVarsProvider';
 
 const defaultTheme = createTheme({
   colorSchemes: { light: true, dark: true },

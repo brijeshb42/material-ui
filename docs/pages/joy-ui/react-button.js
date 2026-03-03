@@ -1,5 +1,5 @@
 import MarkdownDocs from 'docs/src/modules/components/MarkdownDocsV2';
-import AppFrame from 'docs/src/modules/components/AppFrame';
+import AppFrame from '@mui/docs/AppFrame';
 import * as pageProps from 'docs/data/joy/components/button/button.md?muiMarkdown';
 
 export default function Page() {

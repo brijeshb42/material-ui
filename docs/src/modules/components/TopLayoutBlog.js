@@ -7,16 +7,16 @@ import ChevronLeftRoundedIcon from '@mui/icons-material/ChevronLeftRounded';
 import Divider from '@mui/material/Divider';
 import Typography from '@mui/material/Typography';
 import Avatar from '@mui/material/Avatar';
-import Head from 'docs/src/modules/components/Head';
-import BrandingCssVarsProvider from 'docs/src/BrandingCssVarsProvider';
+import Head from '@mui/docs/Head';
+import BrandingCssVarsProvider from '@mui/docs/BrandingCssVarsProvider';
 import AppHeader from 'docs/src/layouts/AppHeader';
-import AppContainer from 'docs/src/modules/components/AppContainer';
+import AppContainer from '@mui/docs/AppContainer';
 import AppFooter from 'docs/src/layouts/AppFooter';
 import HeroEnd from 'docs/src/components/home/HeroEnd';
 import { MarkdownElement } from '@mui/docs/MarkdownElement';
-import RichMarkdownElement from 'docs/src/modules/components/RichMarkdownElement';
-import { pathnameToLanguage } from 'docs/src/modules/utils/helpers';
-import ROUTES from 'docs/src/route';
+import RichMarkdownElement from '@mui/docs/RichMarkdownElement';
+import { pathnameToLanguage } from '@mui/docs/utils/helpers';
+import ROUTES from '@mui/docs/route';
 import { Link } from '@mui/docs/Link';
 
 export const authors = {

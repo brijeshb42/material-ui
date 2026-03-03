@@ -32,7 +32,7 @@ import { ShowcaseCodeWrapper } from 'docs/src/components/home/ShowcaseContainer'
 import { customTheme } from 'docs/src/components/home/MaterialDesignComponents';
 import { HighlightedCode } from '@mui/docs/HighlightedCode';
 import MaterialVsCustomToggle from 'docs/src/components/action/MaterialVsCustomToggle';
-import ROUTES from 'docs/src/route';
+import ROUTES from '@mui/docs/route';
 
 const DEMOS = ['Button', 'Text Field', 'Table', 'Alert', 'Tooltip'] as const;
 

@@ -10,7 +10,7 @@ import LogoWithCopyMenu from 'docs/src/components/action/LogoWithCopyMenu';
 import HeaderNavBar from 'docs/src/components/header/HeaderNavBar';
 import HeaderNavDropdown from 'docs/src/components/header/HeaderNavDropdown';
 import ThemeModeToggle from 'docs/src/components/header/ThemeModeToggle';
-import { DeferredAppSearch } from 'docs/src/modules/components/AppFrame';
+import { DeferredAppSearch } from '@mui/docs/AppFrame';
 import { useTranslate } from '@mui/docs/i18n';
 
 const Header = styled('header')(({ theme }) => [

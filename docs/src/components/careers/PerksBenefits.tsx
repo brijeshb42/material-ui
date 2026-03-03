@@ -9,7 +9,7 @@ import { Link } from '@mui/docs/Link';
 import IconImage from '@mui/docs/IconImage';
 import Section from 'docs/src/layouts/Section';
 import SectionHeadline from '@mui/docs/SectionHeadline';
-import ROUTES from 'docs/src/route';
+import ROUTES from '@mui/docs/route';
 
 const companyInfo = [
   {

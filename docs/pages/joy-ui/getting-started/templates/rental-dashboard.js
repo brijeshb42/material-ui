@@ -1,7 +1,7 @@
 import * as React from 'react';
-import Head from 'docs/src/modules/components/Head';
+import Head from '@mui/docs/Head';
 import RentalDashboardTemplate from 'docs/data/joy/getting-started/templates/rental-dashboard/App';
-import { NextNProgressBar } from 'docs/src/modules/components/AppFrame';
+import { NextNProgressBar } from '@mui/docs/AppFrame';
 
 export default function RentalDashboard() {
   return (

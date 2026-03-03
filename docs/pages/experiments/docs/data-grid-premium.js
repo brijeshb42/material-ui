@@ -1,4 +1,4 @@
-import ApiPage from 'docs/src/modules/components/ApiPage';
+import ApiPage from '@mui/docs/ApiPage';
 import jsonPageContent from './data-grid-premium.json';
 import descriptions from './data-grid-premium-translation.json';
 

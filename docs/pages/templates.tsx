@@ -1,5 +1,5 @@
 import Divider from '@mui/material/Divider';
-import Head from 'docs/src/modules/components/Head';
+import Head from '@mui/docs/Head';
 import AppHeader from 'docs/src/layouts/AppHeader';
 import AppFooter from 'docs/src/layouts/AppFooter';
 import TemplateHero from 'docs/src/components/productTemplate/TemplateHero';
@@ -7,7 +7,7 @@ import ValueProposition from 'docs/src/components/home/ValueProposition';
 import TemplateDemo from 'docs/src/components/productTemplate/TemplateDemo';
 import Testimonials from 'docs/src/components/home/Testimonials';
 import HeroEnd from 'docs/src/components/home/HeroEnd';
-import BrandingCssVarsProvider from 'docs/src/BrandingCssVarsProvider';
+import BrandingCssVarsProvider from '@mui/docs/BrandingCssVarsProvider';
 import References, { TEMPLATES_CUSTOMERS } from 'docs/src/components/home/References';
 import AppHeaderBanner from 'docs/src/components/banner/AppHeaderBanner';
 

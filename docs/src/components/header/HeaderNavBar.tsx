@@ -9,9 +9,9 @@ import { unstable_debounce as debounce } from '@mui/utils';
 import Fade from '@mui/material/Fade';
 import Typography from '@mui/material/Typography';
 import IconImage from '@mui/docs/IconImage';
-import ROUTES from 'docs/src/route';
+import ROUTES from '@mui/docs/route';
 import { Link } from '@mui/docs/Link';
-import MuiProductSelector from 'docs/src/modules/components/MuiProductSelector';
+import MuiProductSelector from '@mui/docs/MuiProductSelector';
 
 const Navigation = styled('nav')(({ theme }) => [
   {

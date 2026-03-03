@@ -2,8 +2,8 @@ import * as React from 'react';
 import Typography from '@mui/material/Typography';
 import { Theme } from '@mui/material/styles';
 import { Link } from '@mui/docs/Link';
-import ROUTES from 'docs/src/route';
-import FEATURE_TOGGLE from 'docs/src/featureToggle';
+import ROUTES from '@mui/docs/route';
+import FEATURE_TOGGLE from '@mui/docs/featureToggle';
 
 const linkStyleOverrides = (theme: Theme) => ({
   color: 'inherit',

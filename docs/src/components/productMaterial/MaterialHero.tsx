@@ -58,7 +58,7 @@ import GetStartedButtons from 'docs/src/components/home/GetStartedButtons';
 import GradientText from 'docs/src/components/typography/GradientText';
 import { getDesignTokens } from '@mui/docs/branding';
 import { Link } from '@mui/docs/Link';
-import ROUTES from 'docs/src/route';
+import ROUTES from '@mui/docs/route';
 
 function Checkboxes() {
   const label = { inputProps: { 'aria-label': 'Checkbox demo' } };

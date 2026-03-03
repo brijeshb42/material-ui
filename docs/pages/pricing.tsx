@@ -1,6 +1,6 @@
 import Container from '@mui/material/Container';
 import Divider from '@mui/material/Divider';
-import Head from 'docs/src/modules/components/Head';
+import Head from '@mui/docs/Head';
 import AppHeader from 'docs/src/layouts/AppHeader';
 import HeroPricing from 'docs/src/components/pricing/HeroPricing';
 import PricingTable from 'docs/src/components/pricing/PricingTable';
@@ -10,7 +10,7 @@ import PricingWhatToExpect from 'docs/src/components/pricing/PricingWhatToExpect
 import PricingFAQ from 'docs/src/components/pricing/PricingFAQ';
 import HeroEnd from 'docs/src/components/home/HeroEnd';
 import AppFooter from 'docs/src/layouts/AppFooter';
-import BrandingCssVarsProvider from 'docs/src/BrandingCssVarsProvider';
+import BrandingCssVarsProvider from '@mui/docs/BrandingCssVarsProvider';
 import AppHeaderBanner from 'docs/src/components/banner/AppHeaderBanner';
 import { MultiAppProvider } from 'docs/src/components/pricing/MultiAppContext';
 import { LicenseModelProvider } from 'docs/src/components/pricing/LicenseModelContext';

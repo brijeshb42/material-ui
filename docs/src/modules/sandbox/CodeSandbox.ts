@@ -5,8 +5,8 @@ import SandboxDependencies from 'docs/src/modules/sandbox/Dependencies';
 import * as CRA from 'docs/src/modules/sandbox/CreateReactApp';
 import getFileExtension from 'docs/src/modules/sandbox/FileExtension';
 import flattenRelativeImports from 'docs/src/modules/sandbox/FlattenRelativeImports';
-import type { SandboxConfig } from 'docs/src/modules/components/DemoContext';
-import { DemoData, CodeVariant } from 'docs/src/modules/sandbox/types';
+import type { SandboxConfig } from '@mui/docs/DemoContext';
+import { DemoData, CodeVariant } from '@mui/docs/sandbox/types';
 
 const CSB_DEV_DEPENDENCIES = {
   'react-scripts': 'latest',

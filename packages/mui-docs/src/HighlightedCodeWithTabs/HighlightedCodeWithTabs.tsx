@@ -19,7 +19,7 @@ export const CodeTabList = styled(TabsListBase)<{
   borderLeft: '1px solid',
   borderRight: '1px solid',
   overflowX: 'auto',
-  ...theme.applyDarkStyles({
+  ...theme.applyStyles('dark', {
     backgroundColor: alpha(theme.palette.primaryDark[800], 0.2),
   }),
   variants: [

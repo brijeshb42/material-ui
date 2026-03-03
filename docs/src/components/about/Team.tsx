@@ -14,7 +14,7 @@ import XIcon from '@mui/icons-material/X';
 import GitHubIcon from '@mui/icons-material/GitHub';
 import LinkedInIcon from '@mui/icons-material/LinkedIn';
 import { Link } from '@mui/docs/Link';
-import ROUTES from 'docs/src/route';
+import ROUTES from '@mui/docs/route';
 import Section from 'docs/src/layouts/Section';
 import SectionHeadline from '@mui/docs/SectionHeadline';
 import GradientText from 'docs/src/components/typography/GradientText';

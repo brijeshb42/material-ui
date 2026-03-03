@@ -1,9 +1,9 @@
 import * as React from 'react';
-import BrandingCssVarsProvider from 'docs/src/BrandingCssVarsProvider';
+import BrandingCssVarsProvider from '@mui/docs/BrandingCssVarsProvider';
 import AppHeaderBanner from 'docs/src/components/banner/AppHeaderBanner';
 import CustomersHero from 'docs/src/components/customers/CustomersHero';
 import AppHeader from 'docs/src/layouts/AppHeader';
-import Head from 'docs/src/modules/components/Head';
+import Head from '@mui/docs/Head';
 import Box from '@mui/material/Box';
 import AppFooter from 'docs/src/layouts/AppFooter';
 import Divider from '@mui/material/Divider';

@@ -32,7 +32,7 @@ import CheckCircleRounded from '@mui/icons-material/CheckCircleRounded';
 import MailRounded from '@mui/icons-material/MailRounded';
 import VerifiedUserRounded from '@mui/icons-material/VerifiedUserRounded';
 import HelpCenterRounded from '@mui/icons-material/HelpCenterRounded';
-import ROUTES from 'docs/src/route';
+import ROUTES from '@mui/docs/route';
 import { Link } from '@mui/docs/Link';
 import { getDesignTokens, getThemedComponents } from '@mui/docs/branding';
 

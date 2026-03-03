@@ -27,7 +27,7 @@ export function GlowingIconContainer({ icon }: GlowingIconContainerProps) {
         '& .MuiSvgIcon-root': {
           fontSize: theme.typography.pxToRem(18),
         },
-        ...theme.applyDarkStyles({
+        ...theme.applyStyles('dark', {
           borderColor: alpha(theme.palette.primary[400], 0.25),
           bgcolor: alpha(theme.palette.primary[900], 0.2),
           boxShadow: `0 0 0 2px ${alpha(theme.palette.primary[600], 0.1)}, 0px 2px 12px 0px rgba(0, 0, 0, 0.25) inset`,
@@ -79,7 +79,7 @@ export function InfoCard(props: InfoCardProps) {
         p: 2.5,
         height: '100%',
         background: `${(theme.vars || theme).palette.gradients.linearSubtle}`,
-        ...theme.applyDarkStyles({
+        ...theme.applyStyles('dark', {
           bgcolor: alpha(theme.palette.primaryDark[800], 0.25),
           background: `${(theme.vars || theme).palette.gradients.linearSubtle}`,
           borderColor: 'primaryDark.700',

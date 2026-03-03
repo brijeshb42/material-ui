@@ -46,7 +46,7 @@ export default function SectionHeadline(props: SectionHeadlineProps) {
                 }
               : {
                   color: 'primaryDark.900',
-                  ...theme.applyDarkStyles({
+                  ...theme.applyStyles('dark', {
                     color: 'grey.100',
                   }),
                 }),
@@ -84,7 +84,7 @@ export default function SectionHeadline(props: SectionHeadlineProps) {
                 }
               : {
                   color: 'grey.800',
-                  ...theme.applyDarkStyles({
+                  ...theme.applyStyles('dark', {
                     color: 'grey.500',
                   }),
                 }),

@@ -1,7 +1,7 @@
 import fs from 'fs';
 import { Feed } from 'feed';
 import { BlogPost } from 'docs/lib/sourcing';
-import ROUTES from 'docs/src/route';
+import ROUTES from '@mui/docs/route';
 
 export default function generateRssFeed(allBlogPosts: Array<BlogPost>) {
   if (process.env.NODE_ENV !== 'production') {

@@ -6,5 +6,5 @@
     "resolveJsonModule": true,
     "types": ["react", "node", "csstype", "vitest/globals"]
   },
-  "include": ["./types.d.ts", "src/**/*", "test/**/*"]
+  "include": ["src/**/*", "test/**/*"]
 }

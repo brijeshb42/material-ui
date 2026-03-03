@@ -1,5 +1,5 @@
 import { test as base, expect } from '@playwright/test';
-import FEATURE_TOGGLE from 'docs/src/featureToggle';
+import FEATURE_TOGGLE from '@mui/docs/featureToggle';
 import { TestFixture } from './playwright.config';
 
 const test = base.extend<TestFixture>({});
