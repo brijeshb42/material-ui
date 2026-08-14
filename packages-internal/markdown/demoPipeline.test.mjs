@@ -33,6 +33,7 @@ describe('resolveDocsInfraDemoFlags', () => {
       source: false,
       liveEdit: false,
       languageVariants: false,
+      headlessSource: false,
     });
   });
 
@@ -42,11 +43,12 @@ describe('resolveDocsInfraDemoFlags', () => {
     );
   });
 
-  it('enables source loading and language variants so far', () => {
+  it('enables every capability migrated so far', () => {
     expect(docsInfraDemoFlags).to.deep.equal({
       source: true,
-      liveEdit: false,
+      liveEdit: true,
       languageVariants: true,
+      headlessSource: true,
     });
   });
 });

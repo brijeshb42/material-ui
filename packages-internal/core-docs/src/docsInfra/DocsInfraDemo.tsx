@@ -10,6 +10,7 @@ import {
   type DocsInfraSourceSelection,
 } from './selectDocsInfraSource';
 import { mergeDocsInfraSourceState, useDocsInfraSourceState } from './useDocsInfraSourceState';
+import { DocsInfraLiveProvider } from './DocsInfraLiveProvider';
 
 // Keep these in sync with docs/public/static/styles/prism-okaidia.css.
 const prismColors = {
@@ -107,10 +108,18 @@ export function DocsInfraDemo(props: DocsInfraDemoProps) {
 
   // Separate components rather than a branch inside one, so the headless path's
   // hooks are never conditional.
-  return flags.headlessSource ? (
-    <HeadlessSourceDemo flags={flags} docsInfra={docsInfra} {...other} />
+  if (!flags.headlessSource) {
+    return <PrecomputedSourceDemo flags={flags} docsInfra={docsInfra} {...other} />;
+  }
+
+  const headless = <HeadlessSourceDemo flags={flags} docsInfra={docsInfra} {...other} />;
+
+  // Live editing needs the controller in scope above the demo, so the provider
+  // wraps rather than nests inside it.
+  return flags.liveEdit && other.demo.scope ? (
+    <DocsInfraLiveProvider scope={other.demo.scope}>{headless}</DocsInfraLiveProvider>
   ) : (
-    <PrecomputedSourceDemo flags={flags} docsInfra={docsInfra} {...other} />
+    headless
   );
 }
 
@@ -155,13 +164,26 @@ function HeadlessSourceDemo(props: ResolvedDocsInfraDemoProps) {
 
   const { selectedFileName, ...sources } = mergeDocsInfraSourceState(precomputed, sourceState);
 
-  return renderDemo(other, sources, selectedFileName);
+  // Only hand `Demo` the live path once docs-infra can accept an edit; without a
+  // controller in scope it keeps its own `ReactRunner`.
+  const liveEditing = sourceState.setSource
+    ? {
+        liveElement: sourceState.liveElement,
+        onSourceChange: sourceState.setSource,
+        error: sourceState.error,
+        onReset: sourceState.reset,
+        onExpandedChange: sourceState.setExpanded,
+      }
+    : undefined;
+
+  return renderDemo(other, sources, selectedFileName, liveEditing);
 }
 
 function renderDemo(
   other: Omit<ResolvedDocsInfraDemoProps, 'flags' | 'docsInfra'>,
   sources: Omit<DocsInfraSourceSelection, 'selectedFileName'>,
   selectedFileName: string | undefined,
+  liveEditing?: DemoProps['liveEditing'],
 ) {
   const githubLocation = selectedFileName
     ? replaceDemoFileName(other.githubLocation, selectedFileName)
@@ -169,7 +191,12 @@ function renderDemo(
 
   return (
     <DocsInfraSourceScope>
-      <Demo {...other} demo={{ ...other.demo, ...sources }} githubLocation={githubLocation} />
+      <Demo
+        {...other}
+        demo={{ ...other.demo, ...sources }}
+        githubLocation={githubLocation}
+        liveEditing={liveEditing}
+      />
     </DocsInfraSourceScope>
   );
 }

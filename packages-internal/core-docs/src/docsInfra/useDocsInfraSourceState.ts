@@ -1,5 +1,6 @@
 import * as React from 'react';
 import { useCode } from '@mui/internal-docs-infra/useCode';
+import { useControlledCode } from '@mui/internal-docs-infra/CodeControllerContext';
 import type { Code } from '@mui/internal-docs-infra/CodeHighlighter/types';
 import { CODE_VARIANTS } from '../constants/constants';
 import type { DocsInfraSourceSelection } from './selectDocsInfraSource';
@@ -22,6 +23,32 @@ export interface DocsInfraSourceState {
   selectedFileName?: string;
   /** Whether docs-infra would accept an edit right now. */
   editable: boolean;
+  /**
+   * Hands an edit to docs-infra, which rebuilds the variant and publishes a new
+   * preview. `undefined` where editing is not wired up.
+   *
+   * While the panel shows the collapsed preview, `source` is only that region,
+   * so it is patched back into the complete file first — a fragment on its own
+   * has no imports and would not run.
+   */
+  setSource?: (source: string, isPreview?: boolean) => void;
+  /**
+   * docs-infra's live preview for the variant on show, once it has built one.
+   * `undefined` before the reader's first edit, so the host keeps rendering its
+   * bundled component.
+   */
+  liveElement?: React.ReactNode;
+  /** The variant's runtime error, as reported by docs-infra's runner. */
+  error?: string | null;
+  /** Discards the reader's edits, restoring the build-time source. */
+  reset?: () => void;
+  /**
+   * Tells docs-infra whether the code panel is showing the whole file or the
+   * collapsed preview. Crossing that boundary discards the edit, since an edit
+   * made through the preview region is not meaningful against the whole file
+   * and the other way round.
+   */
+  setExpanded?: (expanded: boolean) => void;
 }
 
 /**
@@ -62,11 +89,37 @@ export function useDocsInfraSourceState(
   // variant's source; reading it would flash the other language.
   const settled = selectedVariant === targetVariant;
 
+  // The live preview and its error come from the controller `LiveDemoProvider`
+  // installed, keyed by the same variant `useCode` selected.
+  const controller = useControlledCode();
+  const liveElement = controller?.components?.[targetVariant];
+  const error = controller?.errors?.[targetVariant] ?? null;
+
+  const { setSource, setProjectedSource } = result;
+  const handleSetSource = React.useCallback(
+    (source: string, isPreview?: boolean) => {
+      // While collapsed the editor holds only the preview region, which
+      // docs-infra patches back into the file — a fragment on its own has no
+      // imports and would not run.
+      if (isPreview) {
+        setProjectedSource?.(source);
+        return;
+      }
+      setSource?.(source);
+    },
+    [setSource, setProjectedSource],
+  );
+
   return {
+    reset: result.reset,
+    setExpanded: result.setExpanded,
     raw: (settled && result.selectedFileSource) || '',
     jsxPreview: settled ? result.selectedFileProjection?.source : undefined,
     selectedFileName: settled ? result.selectedFileName : undefined,
     editable: result.selectedFileEditable,
+    setSource: setSource ? handleSetSource : undefined,
+    liveElement,
+    error,
   };
 }
 

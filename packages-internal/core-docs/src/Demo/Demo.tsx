@@ -121,6 +121,7 @@ interface UseDemoElementParams {
   editorCode: { value: string; isPreview: boolean; initialEditorCode: string };
   setDebouncedError: React.Dispatch<React.SetStateAction<string | null>>;
   liveDemoActive: boolean;
+  liveEditing?: DemoProps['liveEditing'];
 }
 
 function useDemoElement({
@@ -128,6 +129,7 @@ function useDemoElement({
   editorCode,
   setDebouncedError,
   liveDemoActive,
+  liveEditing,
 }: UseDemoElementParams) {
   const debouncedSetError = React.useMemo(
     () => debounce(setDebouncedError, 300),
@@ -165,9 +167,19 @@ function useDemoElement({
   );
 
   // No need for a live environment if the code matches with the component rendered server-side.
-  return editorCode.value === editorCode.initialEditorCode && liveDemoActive === false
-    ? BundledComponent
-    : LiveComponent;
+  const unedited = editorCode.value === editorCode.initialEditorCode && liveDemoActive === false;
+  if (unedited) {
+    return BundledComponent;
+  }
+
+  // A migrated demo runs its edits through docs-infra. Its preview arrives only
+  // once the first build resolves, so the bundled render covers the gap rather
+  // than blanking the demo.
+  if (liveEditing) {
+    return liveEditing.liveElement ?? BundledComponent;
+  }
+
+  return LiveComponent;
 }
 
 const Root = styled('div')(({ theme }) => ({
@@ -406,6 +418,18 @@ export interface DemoProps {
     hideEditButton?: boolean;
     anchorId?: string | null;
   };
+  /**
+   * Live editing driven by docs-infra rather than `ReactRunner`. Set only for a
+   * migrated demo whose `liveEdit` capability is on: edits leave through
+   * `onSourceChange`, and `liveElement` is what docs-infra rebuilt from them.
+   */
+  liveEditing?: {
+    liveElement?: React.ReactNode;
+    onSourceChange?: (source: string, isPreview?: boolean) => void;
+    error?: string | null;
+    onReset?: () => void;
+    onExpandedChange?: (expanded: boolean) => void;
+  };
   disableAd: boolean;
   githubLocation: string;
   /**
@@ -417,7 +441,14 @@ export interface DemoProps {
 }
 
 export function Demo(props: DemoProps) {
-  const { demo, demoOptions, disableAd, githubLocation, demoToolbarSlot: DemoToolbar } = props;
+  const {
+    demo,
+    demoOptions,
+    disableAd,
+    githubLocation,
+    demoToolbarSlot: DemoToolbar,
+    liveEditing,
+  } = props;
 
   // Guard with NEXT_RUNTIME so this check is dead-code-eliminated from client bundles.
   if (process.env.NEXT_RUNTIME) {
@@ -544,14 +575,18 @@ export function Demo(props: DemoProps) {
     initialEditorCode,
   });
 
+  const liveEditingReset = liveEditing?.onReset;
   const resetDemo = React.useCallback(() => {
+    // A migrated demo's source lives in docs-infra's controller, so clearing the
+    // local editor state alone would leave the edit rendering.
+    liveEditingReset?.();
     setEditorCode({
       value: initialEditorCode,
       isPreview,
       initialEditorCode,
     });
     setDemoKey();
-  }, [setEditorCode, setDemoKey, initialEditorCode, isPreview]);
+  }, [setEditorCode, setDemoKey, initialEditorCode, isPreview, liveEditingReset]);
 
   // Reset the (user-editable) editor code whenever the demo's source or preview
   // mode changes. Adjusting state during render is preferred over an effect.
@@ -568,6 +603,15 @@ export function Demo(props: DemoProps) {
     });
   }
 
+  // Keep docs-infra's collapsed/expanded state in step with the code panel.
+  // Crossing that boundary discards the edit — a preview edit covers only the
+  // visible region, and an edit against the whole file touches lines the
+  // preview cannot show.
+  const liveEditingOnExpandedChange = liveEditing?.onExpandedChange;
+  React.useEffect(() => {
+    liveEditingOnExpandedChange?.(!isPreview);
+  }, [liveEditingOnExpandedChange, isPreview]);
+
   const [debouncedError, setDebouncedError] = React.useState<string | null>(null);
 
   const [liveDemoActive, setLiveDemoActive] = React.useState(false);
@@ -577,6 +621,7 @@ export function Demo(props: DemoProps) {
     editorCode,
     setDebouncedError,
     liveDemoActive,
+    liveEditing,
   });
 
   const [activeTab, setActiveTab] = React.useState(0);
@@ -763,6 +808,11 @@ export function Demo(props: DemoProps) {
                             ...editorCode,
                             value,
                           });
+                          // A migrated demo builds its preview from docs-infra's
+                          // controlled source, so the edit has to reach it too.
+                          // While collapsed the editor holds only the preview
+                          // region, which docs-infra patches back into the file.
+                          liveEditing?.onSourceChange?.(value, editorCode.isPreview);
                         }) as any
                       }
                       onFocus={() => {
@@ -786,7 +836,9 @@ export function Demo(props: DemoProps) {
                         } as any
                       }
                     >
-                      <DemoEditorError>{debouncedError}</DemoEditorError>
+                      <DemoEditorError>
+                        {liveEditing ? liveEditing.error : debouncedError}
+                      </DemoEditorError>
                     </DemoEditor>
                   )}
                 </Tabs.Panel>

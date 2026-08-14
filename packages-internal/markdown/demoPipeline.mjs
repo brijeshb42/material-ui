@@ -11,7 +11,7 @@
  */
 export const docsInfraDemoFlags = {
   source: true,
-  liveEdit: false,
+  liveEdit: true,
   languageVariants: true,
   headlessSource: true,
 };

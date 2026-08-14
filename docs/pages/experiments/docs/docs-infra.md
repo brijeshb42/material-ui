@@ -6,10 +6,11 @@
 
 This demo opts in with `"docsInfra": true`, so the Markdown loader
 precomputes its source graph with docs-infra and the source below is highlighted
-by docs-infra instead of Prism. Every other demo on this page still renders
+by docs-infra instead of Prism, and edits are executed by docs-infra's own
+runner rather than `ReactRunner`. Every other demo on this page still renders
 through the legacy pipeline.
 
-{{"demo": "DemoInDocsDocsInfra.js", "docsInfra": true, "defaultCodeOpen": false, "disableLiveEdit": true}}
+{{"demo": "DemoInDocsDocsInfra.js", "docsInfra": true, "defaultCodeOpen": false}}
 
 ## With relative files
 
@@ -24,7 +25,7 @@ in `docs/pages` is a route, the same arrangement used by the Multiple Tabs demo.
 Docs-infra flattens relative files beside the entry point for display, even when
 they live elsewhere in the file system.
 
-{{"demo": "DemoInDocsDocsInfraFiles.js", "docsInfra": true, "defaultCodeOpen": false, "disableLiveEdit": true}}
+{{"demo": "DemoInDocsDocsInfraFiles.js", "docsInfra": true, "defaultCodeOpen": false}}
 
 ## Collapsed preview
 
@@ -34,4 +35,4 @@ docs-infra resolves it against the source it loaded and returns the matching
 region, which is what appears below. Expanding the code shows the whole file,
 and the JS/TS toggle switches the preview along with it.
 
-{{"demo": "DemoInDocsDocsInfra.js", "docsInfra": true, "disableLiveEdit": true}}
+{{"demo": "DemoInDocsDocsInfra.js", "docsInfra": true}}
