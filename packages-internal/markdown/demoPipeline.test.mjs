@@ -32,7 +32,7 @@ describe('resolveDocsInfraDemoFlags', () => {
     expect(resolveDocsInfraDemoFlags({ demo: 'DemoInDocs.js' })).to.deep.equal({
       source: false,
       liveEdit: false,
-      languageTransform: false,
+      languageVariants: false,
     });
   });
 
@@ -42,11 +42,11 @@ describe('resolveDocsInfraDemoFlags', () => {
     );
   });
 
-  it('enables source loading and nothing else so far', () => {
+  it('enables source loading and language variants so far', () => {
     expect(docsInfraDemoFlags).to.deep.equal({
       source: true,
       liveEdit: false,
-      languageTransform: false,
+      languageVariants: true,
     });
   });
 });

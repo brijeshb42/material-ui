@@ -3,6 +3,8 @@ import { styled } from '@mui/material/styles';
 import type { DocsInfraDemoFlags } from '@mui/internal-markdown/demoPipeline';
 import type { DocsInfraDemoData } from '@mui/internal-markdown/precomputeDocsInfraDemo';
 import { Demo, type DemoProps } from '../Demo/Demo';
+import { useCodeVariant } from '../codeVariant/codeVariant';
+import { selectDocsInfraSource } from './selectDocsInfraSource';
 
 // Keep these in sync with docs/public/static/styles/prism-okaidia.css.
 const prismColors = {
@@ -93,17 +95,21 @@ export interface DocsInfraDemoProps extends DemoProps {
  */
 export function DocsInfraDemo(props: DocsInfraDemoProps) {
   const { flags, docsInfra, ...other } = props;
+  const codeVariant = useCodeVariant();
 
   if (!flags.source || !docsInfra) {
     return <Demo {...other} />;
   }
 
+  const sources = selectDocsInfraSource(docsInfra.variants, {
+    languageVariants: flags.languageVariants,
+    codeVariant,
+    hasLegacyTypescript: Boolean(other.demo.rawTS),
+  });
+
   return (
     <DocsInfraSourceScope>
-      <Demo
-        {...other}
-        demo={{ ...other.demo, raw: docsInfra.source, highlightedHtml: docsInfra.html }}
-      />
+      <Demo {...other} demo={{ ...other.demo, ...sources }} />
     </DocsInfraSourceScope>
   );
 }

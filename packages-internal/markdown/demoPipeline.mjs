@@ -12,14 +12,14 @@
 export const docsInfraDemoFlags = {
   source: true,
   liveEdit: false,
-  languageTransform: false,
+  languageVariants: true,
 };
 
 /** @type {import('./demoPipeline.mjs').DocsInfraDemoFlags} */
 const DISABLED_FLAGS = {
   source: false,
   liveEdit: false,
-  languageTransform: false,
+  languageVariants: false,
 };
 
 /**

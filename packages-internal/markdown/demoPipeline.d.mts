@@ -5,7 +5,7 @@
 export interface DocsInfraDemoFlags {
   source: boolean;
   liveEdit: boolean;
-  languageTransform: boolean;
+  languageVariants: boolean;
 }
 
 export type DemoPipeline = 'legacy' | 'docs-infra';

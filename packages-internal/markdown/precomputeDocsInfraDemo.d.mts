@@ -9,15 +9,23 @@ export interface PrecomputeDocsInfraDemoOptions {
   previewSource?: string;
 }
 
-export interface DocsInfraDemoData {
-  /** Entry source as loaded by docs-infra. */
+export interface DocsInfraDemoVariant {
+  /** Variant source as loaded by docs-infra. */
   source: string;
-  /** Entry source highlighted by docs-infra, as HTML. */
+  /** Variant source highlighted by docs-infra, as HTML. */
   html: string;
   /** Displayed file name. */
   fileName: string;
   /** Source language reported by docs-infra. */
   language?: string;
+}
+
+export interface DocsInfraDemoData {
+  /**
+   * Processed source keyed by language. `JS` is always present; `TS` only when
+   * the demo has a TypeScript sibling. Keys match `CODE_VARIANTS`.
+   */
+  variants: Record<string, DocsInfraDemoVariant>;
   /** External imports collected from the source graph. */
   externals: Externals;
   /** Source URLs the demo depends on. */

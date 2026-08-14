@@ -50,9 +50,15 @@ describe('demoLoader docs-infra selection', () => {
     const demos = await loadDemos(selectedPage);
 
     const demo = demos['SelectedDemo.js'];
-    expect(demo.docsInfra.source).to.equal(demo.raw);
-    expect(demo.docsInfra.fileName).to.equal('SelectedDemo.js');
-    expect(demo.docsInfra.html).to.contain('class="pl-k"');
+    expect(demo.docsInfra.variants.JS.source).to.equal(demo.raw);
+    expect(demo.docsInfra.variants.JS.fileName).to.equal('SelectedDemo.js');
+    expect(demo.docsInfra.variants.JS.html).to.contain('class="pl-k"');
+  });
+
+  it('emits only the JavaScript variant for a demo with no TypeScript sibling', async () => {
+    const demos = await loadDemos(selectedPage);
+
+    expect(demos['SelectedDemo.js'].docsInfra.variants).to.have.keys(['JS']);
   });
 
   it('leaves the legacy data of the selected demo untouched', async () => {
