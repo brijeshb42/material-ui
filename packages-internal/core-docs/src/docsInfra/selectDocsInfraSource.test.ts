@@ -3,8 +3,35 @@ import { CODE_VARIANTS } from '../constants/constants';
 import { replaceDemoFileName, selectDocsInfraSource } from './selectDocsInfraSource';
 
 const variants = {
-  JS: { source: 'js source', html: '<span>js</span>', fileName: 'Demo.js', language: 'jsx' },
-  TS: { source: 'ts source', html: '<span>ts</span>', fileName: 'Demo.tsx', language: 'tsx' },
+  JS: {
+    source: 'js source',
+    html: '<span>js</span>',
+    fileName: 'Demo.js',
+    language: 'jsx',
+    relativeFiles: [],
+  },
+  TS: {
+    source: 'ts source',
+    html: '<span>ts</span>',
+    fileName: 'Demo.tsx',
+    language: 'tsx',
+    relativeFiles: [],
+  },
+};
+
+const withRelativeFiles = {
+  JS: {
+    ...variants.JS,
+    relativeFiles: [
+      { module: './data.js', raw: 'js data', highlightedHtml: '<span>js data</span>' },
+    ],
+  },
+  TS: {
+    ...variants.TS,
+    relativeFiles: [
+      { module: './data.ts', raw: 'ts data', highlightedHtml: '<span>ts data</span>' },
+    ],
+  },
 };
 
 const javascriptOnly = { JS: variants.JS };
@@ -96,5 +123,42 @@ describe('selectDocsInfraSource', () => {
     expect(
       replaceDemoFileName('https://github.com/mui/material-ui/blob/v7/docs/Demo.js', 'Demo.tsx'),
     ).to.equal('https://github.com/mui/material-ui/blob/v7/docs/Demo.tsx');
+  });
+
+  describe('relative files', () => {
+    it('keys the relative files by language', () => {
+      const result = selectDocsInfraSource(withRelativeFiles, {
+        languageVariants: true,
+        codeVariant: CODE_VARIANTS.TS,
+        hasLegacyTypescript: true,
+      });
+
+      expect(result.relativeModules).to.deep.equal({
+        JS: [{ module: './data.js', raw: 'js data', highlightedHtml: '<span>js data</span>' }],
+        TS: [{ module: './data.ts', raw: 'ts data', highlightedHtml: '<span>ts data</span>' }],
+      });
+    });
+
+    it('leaves the relative files to the loader when language variants are off', () => {
+      const result = selectDocsInfraSource(withRelativeFiles, {
+        languageVariants: false,
+        codeVariant: CODE_VARIANTS.JS,
+        hasLegacyTypescript: true,
+      });
+
+      expect(result.relativeModules).to.deep.equal({
+        JS: [{ module: './data.js', raw: 'js data', highlightedHtml: '<span>js data</span>' }],
+      });
+    });
+
+    it('omits the key entirely for a demo with no relative files', () => {
+      const result = selectDocsInfraSource(variants, {
+        languageVariants: true,
+        codeVariant: CODE_VARIANTS.JS,
+        hasLegacyTypescript: true,
+      });
+
+      expect(result).to.not.have.property('relativeModules');
+    });
   });
 });

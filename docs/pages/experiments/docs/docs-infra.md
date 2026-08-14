@@ -16,3 +16,15 @@ through the legacy pipeline.
 ### Docs infra transform
 
 {{"demo": "DemoInDocsDocsInfra.js", "docsInfra": true, "defaultCodeOpen": false, "disableLiveEdit": true}}
+
+## docs-infra pipeline with relative files
+
+This demo imports `notesData`, so it renders one tab per file. The data ships in
+each language, and the extensionless import resolves against whichever sibling
+matches the language on show: `notesData.js` for JavaScript, `notesData.ts` for
+TypeScript. Every file in the tabs is loaded and highlighted by docs-infra.
+
+The data lives under `docs/data` rather than beside the demo because everything
+in `docs/pages` is a route, the same arrangement used by the Multiple Tabs demo.
+
+{{"demo": "DemoInDocsDocsInfraFiles.js", "docsInfra": true, "defaultCodeOpen": true, "disableLiveEdit": true}}

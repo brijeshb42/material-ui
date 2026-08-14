@@ -9,6 +9,15 @@ export interface PrecomputeDocsInfraDemoOptions {
   previewSource?: string;
 }
 
+export interface DocsInfraRelativeFile {
+  /** Path relative to the variant, used as the tab label. */
+  module: string;
+  /** File source as loaded by docs-infra. */
+  raw: string;
+  /** File source highlighted by docs-infra, as HTML. */
+  highlightedHtml: string;
+}
+
 export interface DocsInfraDemoVariant {
   /** Variant source as loaded by docs-infra. */
   source: string;
@@ -18,6 +27,8 @@ export interface DocsInfraDemoVariant {
   fileName: string;
   /** Source language reported by docs-infra. */
   language?: string;
+  /** Relative files this variant imports, in the order docs-infra loaded them. */
+  relativeFiles: DocsInfraRelativeFile[];
 }
 
 export interface DocsInfraDemoData {

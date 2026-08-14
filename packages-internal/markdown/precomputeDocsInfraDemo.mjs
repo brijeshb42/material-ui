@@ -74,7 +74,38 @@ function readVariant(code, variantName, demoName) {
     html: toHtml(source),
     fileName: variant.fileName ?? '',
     language: variant.language,
+    relativeFiles: readRelativeFiles(variant),
   };
+}
+
+/**
+ * Reads the relative files docs-infra loaded alongside one variant.
+ *
+ * The keys are paths relative to the variant, which the demo displays as tab
+ * labels the same way the legacy pipeline displays its module IDs.
+ *
+ * @param {import('@mui/internal-docs-infra/CodeHighlighter/types').VariantCode} variant
+ * @returns {import('./precomputeDocsInfraDemo.mjs').DocsInfraRelativeFile[]}
+ */
+function readRelativeFiles(variant) {
+  return Object.entries(variant.extraFiles ?? {}).flatMap(([fileName, file]) => {
+    if (typeof file === 'string' || !file?.source) {
+      return [];
+    }
+
+    const { source } = file;
+    if (typeof source === 'string' || !('type' in source) || source.type !== 'root') {
+      return [];
+    }
+
+    return [
+      {
+        module: fileName.startsWith('.') ? fileName : `./${fileName}`,
+        raw: getHastTextContent(source),
+        highlightedHtml: toHtml(source),
+      },
+    ];
+  });
 }
 
 /**

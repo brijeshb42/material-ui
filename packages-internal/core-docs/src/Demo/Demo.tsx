@@ -56,7 +56,7 @@ interface DemoData {
   module: string | undefined;
   Component: React.ComponentType | null;
   sourceLanguage: string;
-  relativeModules?: Array<{ module: string; raw: string }>;
+  relativeModules?: Array<{ module: string; raw: string; highlightedHtml?: string }>;
   title: string;
   language: string;
 }
@@ -77,7 +77,7 @@ function useDemoData(
       module: string | undefined;
       Component: React.ComponentType | null;
       sourceLanguage: string;
-      relativeModules?: Array<{ module: string; raw: string }>;
+      relativeModules?: Array<{ module: string; raw: string; highlightedHtml?: string }>;
     };
 
     if (codeVariant === CODE_VARIANTS.TS && demo.rawTS) {
@@ -378,7 +378,10 @@ export interface DemoProps {
     jsCSS?: React.ComponentType | null;
     tsxCSS?: React.ComponentType | null;
     gaLabel?: string;
-    relativeModules?: Record<string, Array<{ module: string; raw: string }>>;
+    relativeModules?: Record<
+      string,
+      Array<{ module: string; raw: string; highlightedHtml?: string }>
+    >;
     /** Pre-highlighted markup for the entry source. */
     highlightedHtml?: string;
   };
@@ -579,7 +582,9 @@ export function Demo(props: DemoProps) {
 
   const tabs = React.useMemo(() => {
     if (!demoData.relativeModules) {
-      return [{ module: demoData.module, raw: demoData.raw }];
+      return [
+        { module: demoData.module, raw: demoData.raw, highlightedHtml: demo.highlightedHtml },
+      ];
     }
     let demoModule = demoData.module;
     if (codeVariant === CODE_VARIANTS.TS && demo.moduleTS) {
@@ -587,9 +592,13 @@ export function Demo(props: DemoProps) {
         demo.moduleTS === demo.module ? demoData.module!.replace(/\.js$/, '.tsx') : demo.moduleTS;
     }
 
-    return [{ module: demoModule, raw: demoData.raw }, ...demoData.relativeModules];
+    return [
+      { module: demoModule, raw: demoData.raw, highlightedHtml: demo.highlightedHtml },
+      ...demoData.relativeModules,
+    ];
   }, [
     codeVariant,
+    demo.highlightedHtml,
     demo.moduleTS,
     demo.module,
     demoData.module,
@@ -712,7 +721,7 @@ export function Demo(props: DemoProps) {
                     <DemoCodeViewer
                       key={index}
                       code={tab.raw}
-                      highlightedHtml={index === 0 ? demo.highlightedHtml : undefined}
+                      highlightedHtml={tab.highlightedHtml}
                       language={demoData.sourceLanguage}
                       copyButtonProps={
                         {

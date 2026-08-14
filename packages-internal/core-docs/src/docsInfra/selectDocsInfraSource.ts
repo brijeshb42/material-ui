@@ -16,6 +16,10 @@ export interface DocsInfraSourceOverrides {
   module: string;
   moduleTS?: string;
   highlightedHtml?: string;
+  relativeModules?: Record<
+    string,
+    Array<{ module: string; raw: string; highlightedHtml?: string }>
+  >;
 }
 
 export interface DocsInfraSourceSelection extends DocsInfraSourceOverrides {
@@ -50,12 +54,23 @@ export function selectDocsInfraSource(
     codeVariant === CODE_VARIANTS.TS && Boolean(typescript || hasLegacyTypescript);
   const selectedVariant = showsTypescript ? typescript : javascript;
 
+  // Each language reaches its own relative files, so the tabs are keyed by
+  // language the same way the loader keys its own.
+  const relativeModules: DocsInfraSourceOverrides['relativeModules'] = {};
+  if (javascript.relativeFiles.length > 0) {
+    relativeModules[CODE_VARIANTS.JS] = javascript.relativeFiles;
+  }
+  if (typescript && typescript.relativeFiles.length > 0) {
+    relativeModules[CODE_VARIANTS.TS] = typescript.relativeFiles;
+  }
+
   return {
     raw: javascript.source,
     ...(typescript ? { rawTS: typescript.source } : {}),
     module: toModule(javascript.fileName),
     ...(typescript ? { moduleTS: toModule(typescript.fileName) } : {}),
     highlightedHtml: showsTypescript ? typescript?.html : javascript.html,
+    ...(Object.keys(relativeModules).length > 0 ? { relativeModules } : {}),
     ...(selectedVariant ? { selectedFileName: selectedVariant.fileName } : {}),
   };
 }
