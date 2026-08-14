@@ -13,7 +13,22 @@ export interface SelectDocsInfraSourceOptions {
 export interface DocsInfraSourceOverrides {
   raw: string;
   rawTS?: string;
+  module: string;
+  moduleTS?: string;
   highlightedHtml?: string;
+}
+
+export interface DocsInfraSourceSelection extends DocsInfraSourceOverrides {
+  /** File that supplies the source currently on show. */
+  selectedFileName?: string;
+}
+
+function toModule(fileName: string) {
+  return fileName.startsWith('.') ? fileName : `./${fileName}`;
+}
+
+export function replaceDemoFileName(location: string, fileName: string) {
+  return location.replace(/[^/]+$/, fileName);
 }
 
 /**
@@ -27,16 +42,20 @@ export interface DocsInfraSourceOverrides {
 export function selectDocsInfraSource(
   variants: DocsInfraDemoData['variants'],
   options: SelectDocsInfraSourceOptions,
-): DocsInfraSourceOverrides {
+): DocsInfraSourceSelection {
   const { languageVariants, codeVariant, hasLegacyTypescript } = options;
   const javascript = variants[CODE_VARIANTS.JS];
   const typescript = languageVariants ? variants[CODE_VARIANTS.TS] : undefined;
   const showsTypescript =
     codeVariant === CODE_VARIANTS.TS && Boolean(typescript || hasLegacyTypescript);
+  const selectedVariant = showsTypescript ? typescript : javascript;
 
   return {
     raw: javascript.source,
     ...(typescript ? { rawTS: typescript.source } : {}),
+    module: toModule(javascript.fileName),
+    ...(typescript ? { moduleTS: toModule(typescript.fileName) } : {}),
     highlightedHtml: showsTypescript ? typescript?.html : javascript.html,
+    ...(selectedVariant ? { selectedFileName: selectedVariant.fileName } : {}),
   };
 }

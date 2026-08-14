@@ -4,7 +4,7 @@ import type { DocsInfraDemoFlags } from '@mui/internal-markdown/demoPipeline';
 import type { DocsInfraDemoData } from '@mui/internal-markdown/precomputeDocsInfraDemo';
 import { Demo, type DemoProps } from '../Demo/Demo';
 import { useCodeVariant } from '../codeVariant/codeVariant';
-import { selectDocsInfraSource } from './selectDocsInfraSource';
+import { replaceDemoFileName, selectDocsInfraSource } from './selectDocsInfraSource';
 
 // Keep these in sync with docs/public/static/styles/prism-okaidia.css.
 const prismColors = {
@@ -101,15 +101,18 @@ export function DocsInfraDemo(props: DocsInfraDemoProps) {
     return <Demo {...other} />;
   }
 
-  const sources = selectDocsInfraSource(docsInfra.variants, {
+  const { selectedFileName, ...sources } = selectDocsInfraSource(docsInfra.variants, {
     languageVariants: flags.languageVariants,
     codeVariant,
     hasLegacyTypescript: Boolean(other.demo.rawTS),
   });
+  const githubLocation = selectedFileName
+    ? replaceDemoFileName(other.githubLocation, selectedFileName)
+    : other.githubLocation;
 
   return (
     <DocsInfraSourceScope>
-      <Demo {...other} demo={{ ...other.demo, ...sources }} />
+      <Demo {...other} demo={{ ...other.demo, ...sources }} githubLocation={githubLocation} />
     </DocsInfraSourceScope>
   );
 }

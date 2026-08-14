@@ -1,6 +1,6 @@
 import { expect } from 'chai';
 import { CODE_VARIANTS } from '../constants/constants';
-import { selectDocsInfraSource } from './selectDocsInfraSource';
+import { replaceDemoFileName, selectDocsInfraSource } from './selectDocsInfraSource';
 
 const variants = {
   JS: { source: 'js source', html: '<span>js</span>', fileName: 'Demo.js', language: 'jsx' },
@@ -20,7 +20,10 @@ describe('selectDocsInfraSource', () => {
     ).to.deep.equal({
       raw: 'js source',
       rawTS: 'ts source',
+      module: './Demo.js',
+      moduleTS: './Demo.tsx',
       highlightedHtml: '<span>js</span>',
+      selectedFileName: 'Demo.js',
     });
   });
 
@@ -34,7 +37,10 @@ describe('selectDocsInfraSource', () => {
     ).to.deep.equal({
       raw: 'js source',
       rawTS: 'ts source',
+      module: './Demo.js',
+      moduleTS: './Demo.tsx',
       highlightedHtml: '<span>ts</span>',
+      selectedFileName: 'Demo.tsx',
     });
   });
 
@@ -47,7 +53,9 @@ describe('selectDocsInfraSource', () => {
       }),
     ).to.deep.equal({
       raw: 'js source',
+      module: './Demo.js',
       highlightedHtml: '<span>js</span>',
+      selectedFileName: 'Demo.js',
     });
   });
 
@@ -61,7 +69,9 @@ describe('selectDocsInfraSource', () => {
         }),
       ).to.deep.equal({
         raw: 'js source',
+        module: './Demo.js',
         highlightedHtml: '<span>js</span>',
+        selectedFileName: 'Demo.js',
       });
     });
 
@@ -76,8 +86,15 @@ describe('selectDocsInfraSource', () => {
         }),
       ).to.deep.equal({
         raw: 'js source',
+        module: './Demo.js',
         highlightedHtml: undefined,
       });
     });
+  });
+
+  it('uses the selected file name in the GitHub location', () => {
+    expect(
+      replaceDemoFileName('https://github.com/mui/material-ui/blob/v7/docs/Demo.js', 'Demo.tsx'),
+    ).to.equal('https://github.com/mui/material-ui/blob/v7/docs/Demo.tsx');
   });
 });
