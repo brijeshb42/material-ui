@@ -16,6 +16,10 @@ export interface DocsInfraSourceOverrides {
   module: string;
   moduleTS?: string;
   highlightedHtml?: string;
+  /** Collapsed preview text for the language on show. */
+  jsxPreview?: string;
+  /** That preview highlighted by docs-infra. */
+  previewHighlightedHtml?: string;
   relativeModules?: Record<
     string,
     Array<{ module: string; raw: string; highlightedHtml?: string }>
@@ -64,12 +68,17 @@ export function selectDocsInfraSource(
     relativeModules[CODE_VARIANTS.TS] = typescript.relativeFiles;
   }
 
+  // The preview follows the language on show, so the collapsed view never
+  // shows one language's fragment above the other's source.
+  const preview = selectedVariant?.preview;
+
   return {
     raw: javascript.source,
     ...(typescript ? { rawTS: typescript.source } : {}),
     module: toModule(javascript.fileName),
     ...(typescript ? { moduleTS: toModule(typescript.fileName) } : {}),
     highlightedHtml: showsTypescript ? typescript?.html : javascript.html,
+    ...(preview ? { jsxPreview: preview.source, previewHighlightedHtml: preview.html } : {}),
     ...(Object.keys(relativeModules).length > 0 ? { relativeModules } : {}),
     ...(selectedVariant ? { selectedFileName: selectedVariant.fileName } : {}),
   };

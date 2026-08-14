@@ -5,6 +5,7 @@ import { promises as fs } from 'fs';
 import { pathToFileURL } from 'url';
 import { precomputeFileDemo } from '@mui/internal-docs-infra/pipeline/precomputeFileDemo';
 import { getHastTextContent } from '@mui/internal-docs-infra/pipeline/hastUtils';
+import { createParseSource } from '@mui/internal-docs-infra/pipeline/parseSource';
 import { toHtml } from 'hast-util-to-html';
 
 /**
@@ -47,14 +48,39 @@ async function resolveEntries(moduleFilepath) {
 }
 
 /**
+ * Highlights the preview slice docs-infra resolved for one variant.
+ *
+ * The slice is highlighted on its own rather than cut out of the variant's
+ * markup: it is displayed as a standalone fragment, the way Material highlights
+ * a `.tsx.preview` file today.
+ *
+ * @param {import('@mui/internal-docs-infra/CodeHighlighter/types').VariantCode} variant
+ * @param {import('@mui/internal-docs-infra/pipeline/parseSource').ParseSource} parseSource
+ * @returns {import('./precomputeDocsInfraDemo.mjs').DocsInfraDemoPreview | undefined}
+ */
+function readPreview(variant, parseSource) {
+  const projection = variant.sourceProjection;
+  if (!projection) {
+    return undefined;
+  }
+
+  const fileName = variant.fileName ?? 'preview.tsx';
+  return {
+    source: projection.source,
+    html: toHtml(parseSource(projection.source, fileName, variant.language)),
+  };
+}
+
+/**
  * Reads one processed variant off the docs-infra result.
  *
  * @param {import('@mui/internal-docs-infra/CodeHighlighter/types').Code} code
  * @param {string} variantName
  * @param {string} demoName
+ * @param {import('@mui/internal-docs-infra/pipeline/parseSource').ParseSource} parseSource
  * @returns {import('./precomputeDocsInfraDemo.mjs').DocsInfraDemoVariant}
  */
-function readVariant(code, variantName, demoName) {
+function readVariant(code, variantName, demoName, parseSource) {
   const variant = code[variantName];
   if (typeof variant === 'string' || !variant) {
     throw new Error(`docs-infra returned no ${variantName} source for the demo "${demoName}"`);
@@ -69,12 +95,14 @@ function readVariant(code, variantName, demoName) {
     );
   }
 
+  const preview = readPreview(variant, parseSource);
   return {
     source: getHastTextContent(source),
     html: toHtml(source),
     fileName: variant.fileName ?? '',
     language: variant.language,
     relativeFiles: readRelativeFiles(variant),
+    ...(preview ? { preview } : {}),
   };
 }
 
@@ -135,10 +163,11 @@ export default async function precomputeDocsInfraDemo(options) {
     { output: 'hast' },
   );
 
+  const parseSource = await createParseSource();
   const variants = Object.fromEntries(
     Object.keys(entries).map((variantName) => [
       variantName,
-      readVariant(precomputed.code, variantName, demoName),
+      readVariant(precomputed.code, variantName, demoName, parseSource),
     ]),
   );
 

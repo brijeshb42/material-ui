@@ -25,3 +25,13 @@ Docs-infra flattens relative files beside the entry point for display, even when
 they live elsewhere in the file system.
 
 {{"demo": "DemoInDocsDocsInfraFiles.js", "docsInfra": true, "defaultCodeOpen": false, "disableLiveEdit": true}}
+
+## Collapsed preview
+
+The same demo again, without `defaultCodeOpen`, so the source panel starts on
+the preview. `DemoInDocsDocsInfra.tsx.preview` names a fragment of the demo;
+docs-infra resolves it against the source it loaded and returns the matching
+region, which is what appears below. Expanding the code shows the whole file,
+and the JS/TS toggle switches the preview along with it.
+
+{{"demo": "DemoInDocsDocsInfra.js", "docsInfra": true, "disableLiveEdit": true}}

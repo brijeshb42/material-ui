@@ -384,6 +384,11 @@ export interface DemoProps {
     >;
     /** Pre-highlighted markup for the entry source. */
     highlightedHtml?: string;
+    /**
+     * Pre-highlighted markup for `jsxPreview`. Set for a docs-infra demo, whose
+     * preview is a region docs-infra resolved against the source it displays.
+     */
+    previewHighlightedHtml?: string;
   };
   demoOptions: {
     demo: string;
@@ -581,10 +586,17 @@ export function Demo(props: DemoProps) {
   const ownerState = { mounted: true, contained: true };
 
   const tabs = React.useMemo(() => {
+    // A read-only demo renders `tab.raw` rather than the editor's value, so the
+    // collapsed preview has to reach the viewer through the tab. Only a
+    // docs-infra demo supplies pre-highlighted preview markup, so this leaves
+    // the legacy preview path untouched.
+    const entry =
+      isPreview && demo.previewHighlightedHtml && demoData.jsxPreview
+        ? { raw: demoData.jsxPreview, highlightedHtml: demo.previewHighlightedHtml }
+        : { raw: demoData.raw, highlightedHtml: demo.highlightedHtml };
+
     if (!demoData.relativeModules) {
-      return [
-        { module: demoData.module, raw: demoData.raw, highlightedHtml: demo.highlightedHtml },
-      ];
+      return [{ module: demoData.module, ...entry }];
     }
     let demoModule = demoData.module;
     if (codeVariant === CODE_VARIANTS.TS && demo.moduleTS) {
@@ -592,13 +604,13 @@ export function Demo(props: DemoProps) {
         demo.moduleTS === demo.module ? demoData.module!.replace(/\.js$/, '.tsx') : demo.moduleTS;
     }
 
-    return [
-      { module: demoModule, raw: demoData.raw, highlightedHtml: demo.highlightedHtml },
-      ...demoData.relativeModules,
-    ];
+    return [{ module: demoModule, ...entry }, ...demoData.relativeModules];
   }, [
     codeVariant,
     demo.highlightedHtml,
+    demo.previewHighlightedHtml,
+    demoData.jsxPreview,
+    isPreview,
     demo.moduleTS,
     demo.module,
     demoData.module,

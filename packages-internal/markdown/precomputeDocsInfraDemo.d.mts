@@ -18,6 +18,13 @@ export interface DocsInfraRelativeFile {
   highlightedHtml: string;
 }
 
+export interface DocsInfraDemoPreview {
+  /** The region of the variant's source that the preview names. */
+  source: string;
+  /** That region highlighted by docs-infra, as HTML. */
+  html: string;
+}
+
 export interface DocsInfraDemoVariant {
   /** Variant source as loaded by docs-infra. */
   source: string;
@@ -29,6 +36,11 @@ export interface DocsInfraDemoVariant {
   language?: string;
   /** Relative files this variant imports, in the order docs-infra loaded them. */
   relativeFiles: DocsInfraRelativeFile[];
+  /**
+   * The collapsed preview, when the demo ships a `.tsx.preview` file that
+   * docs-infra could resolve against this variant's source.
+   */
+  preview?: DocsInfraDemoPreview;
 }
 
 export interface DocsInfraDemoData {
