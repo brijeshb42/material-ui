@@ -4,7 +4,12 @@ import type { DocsInfraDemoFlags } from '@mui/internal-markdown/demoPipeline';
 import type { DocsInfraDemoData } from '@mui/internal-markdown/precomputeDocsInfraDemo';
 import { Demo, type DemoProps } from '../Demo/Demo';
 import { useCodeVariant } from '../codeVariant/codeVariant';
-import { replaceDemoFileName, selectDocsInfraSource } from './selectDocsInfraSource';
+import {
+  replaceDemoFileName,
+  selectDocsInfraSource,
+  type DocsInfraSourceSelection,
+} from './selectDocsInfraSource';
+import { mergeDocsInfraSourceState, useDocsInfraSourceState } from './useDocsInfraSourceState';
 
 // Keep these in sync with docs/public/static/styles/prism-okaidia.css.
 const prismColors = {
@@ -95,17 +100,69 @@ export interface DocsInfraDemoProps extends DemoProps {
  */
 export function DocsInfraDemo(props: DocsInfraDemoProps) {
   const { flags, docsInfra, ...other } = props;
-  const codeVariant = useCodeVariant();
 
   if (!flags.source || !docsInfra) {
     return <Demo {...other} />;
   }
+
+  // Separate components rather than a branch inside one, so the headless path's
+  // hooks are never conditional.
+  return flags.headlessSource ? (
+    <HeadlessSourceDemo flags={flags} docsInfra={docsInfra} {...other} />
+  ) : (
+    <PrecomputedSourceDemo flags={flags} docsInfra={docsInfra} {...other} />
+  );
+}
+
+type ResolvedDocsInfraDemoProps = Omit<DocsInfraDemoProps, 'docsInfra'> & {
+  docsInfra: DocsInfraDemoData;
+};
+
+/** Everything the demo displays comes from the loader's precomputed strings. */
+function PrecomputedSourceDemo(props: ResolvedDocsInfraDemoProps) {
+  const { flags, docsInfra, ...other } = props;
+  const codeVariant = useCodeVariant();
 
   const { selectedFileName, ...sources } = selectDocsInfraSource(docsInfra.variants, {
     languageVariants: flags.languageVariants,
     codeVariant,
     hasLegacyTypescript: Boolean(other.demo.rawTS),
   });
+
+  return renderDemo(other, sources, selectedFileName);
+}
+
+/**
+ * The displayed source comes from docs-infra's headless `useCode` instead, so
+ * the demo reads the same state the live controller will own. Highlighted
+ * markup, relative files, and the language toggle are unchanged.
+ */
+function HeadlessSourceDemo(props: ResolvedDocsInfraDemoProps) {
+  const { flags, docsInfra, ...other } = props;
+  const codeVariant = useCodeVariant();
+
+  const precomputed = selectDocsInfraSource(docsInfra.variants, {
+    languageVariants: flags.languageVariants,
+    codeVariant,
+    hasLegacyTypescript: Boolean(other.demo.rawTS),
+  });
+
+  const sourceState = useDocsInfraSourceState(docsInfra.code, {
+    slug: other.demo.gaLabel ?? other.githubLocation,
+    codeVariant,
+    languageVariants: flags.languageVariants,
+  });
+
+  const { selectedFileName, ...sources } = mergeDocsInfraSourceState(precomputed, sourceState);
+
+  return renderDemo(other, sources, selectedFileName);
+}
+
+function renderDemo(
+  other: Omit<ResolvedDocsInfraDemoProps, 'flags' | 'docsInfra'>,
+  sources: Omit<DocsInfraSourceSelection, 'selectedFileName'>,
+  selectedFileName: string | undefined,
+) {
   const githubLocation = selectedFileName
     ? replaceDemoFileName(other.githubLocation, selectedFileName)
     : other.githubLocation;

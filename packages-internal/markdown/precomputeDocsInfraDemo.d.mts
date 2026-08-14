@@ -1,4 +1,4 @@
-import type { Externals } from '@mui/internal-docs-infra/CodeHighlighter/types';
+import type { Code, Externals } from '@mui/internal-docs-infra/CodeHighlighter/types';
 
 export interface PrecomputeDocsInfraDemoOptions {
   /** Demo marker value as written in Markdown. */
@@ -49,6 +49,12 @@ export interface DocsInfraDemoData {
    * the demo has a TypeScript sibling. Keys match `CODE_VARIANTS`.
    */
   variants: Record<string, DocsInfraDemoVariant>;
+  /**
+   * The same variants as serializable docs-infra code carrying plain text, for
+   * a headless `useCode` to read on the client. Highlighted markup stays in
+   * `variants`.
+   */
+  code: Code;
   /** External imports collected from the source graph. */
   externals: Externals;
   /** Source URLs the demo depends on. */

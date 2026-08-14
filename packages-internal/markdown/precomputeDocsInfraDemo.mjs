@@ -137,6 +137,47 @@ function readRelativeFiles(variant) {
 }
 
 /**
+ * Reduces one loaded variant to a serializable `VariantCode` carrying plain
+ * text.
+ *
+ * This is what a headless `useCode` reads on the client. The highlighted markup
+ * stays in `variants`, so the text form needs no HAST and stays small. The
+ * loader's `url` fields are absolute paths on the build machine, so they are
+ * dropped rather than shipped.
+ *
+ * @param {import('@mui/internal-docs-infra/CodeHighlighter/types').VariantCode} variant
+ * @returns {import('@mui/internal-docs-infra/CodeHighlighter/types').VariantCode}
+ */
+function toTextVariant(variant) {
+  const extraFiles = Object.fromEntries(
+    Object.entries(variant.extraFiles ?? {}).flatMap(([fileName, file]) => {
+      if (typeof file === 'string' || !file?.source) {
+        return [];
+      }
+      const { url: fileUrl, ...rest } = file;
+      return [
+        [
+          fileName,
+          typeof rest.source === 'string'
+            ? rest
+            : { ...rest, source: getHastTextContent(file.source) },
+        ],
+      ];
+    }),
+  );
+
+  const { url, ...rest } = variant;
+  return {
+    ...rest,
+    source:
+      variant.source && typeof variant.source !== 'string'
+        ? getHastTextContent(variant.source)
+        : variant.source,
+    ...(Object.keys(extraFiles).length > 0 ? { extraFiles } : {}),
+  };
+}
+
+/**
  * Builds the docs-infra source graph for one demo marker.
  *
  * This is the only build-time module allowed to import docs-infra. It returns
@@ -171,8 +212,15 @@ export default async function precomputeDocsInfraDemo(options) {
     ]),
   );
 
+  const code = Object.fromEntries(
+    Object.entries(precomputed.code).flatMap(([variantName, variant]) =>
+      typeof variant === 'string' || !variant ? [] : [[variantName, toTextVariant(variant)]],
+    ),
+  );
+
   return {
     variants,
+    code,
     externals: precomputed.externals,
     dependencies: precomputed.dependencies,
   };

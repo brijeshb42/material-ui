@@ -13,6 +13,7 @@ export const docsInfraDemoFlags = {
   source: true,
   liveEdit: false,
   languageVariants: true,
+  headlessSource: true,
 };
 
 /** @type {import('./demoPipeline.mjs').DocsInfraDemoFlags} */
@@ -20,6 +21,7 @@ const DISABLED_FLAGS = {
   source: false,
   liveEdit: false,
   languageVariants: false,
+  headlessSource: false,
 };
 
 /**

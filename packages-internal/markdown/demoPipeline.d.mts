@@ -6,6 +6,12 @@ export interface DocsInfraDemoFlags {
   source: boolean;
   liveEdit: boolean;
   languageVariants: boolean;
+  /**
+   * Reads the displayed source from docs-infra's headless `useCode` at runtime
+   * rather than from the strings the loader precomputed. Highlighted markup
+   * still comes from the precompute.
+   */
+  headlessSource: boolean;
 }
 
 export type DemoPipeline = 'legacy' | 'docs-infra';
