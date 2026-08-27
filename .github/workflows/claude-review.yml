@@ -64,7 +64,7 @@ jobs:
           model: claude-sonnet-4-6
           max-turns: 200
           preview-directory: examples/triage-preview
-          show-full-output: true
+          show-full-output: false
           snapshot-excludes: docs/public
 
   publish:
