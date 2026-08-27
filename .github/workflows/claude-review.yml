@@ -99,7 +99,7 @@ jobs:
 
       - name: Capture issue context and create triage artifact
         id: triage
-        uses: brijeshb42/claude-triage-action/triage@7d5146314b61d786e47e942e6f1da266a85b6d19
+        uses: brijeshb42/claude-triage-action/triage@0d21ef4d5d512acfdb80c5a7af55ad0921476056
         with:
           anthropic-federation-rule-id: ${{ vars.ANTHROPIC_FEDERATION_RULE_ID }}
           anthropic-organization-id: ${{ vars.ANTHROPIC_ORGANIZATION_ID }}
@@ -125,7 +125,7 @@ jobs:
       issues: write
     steps:
       - name: Report triage outcome
-        uses: brijeshb42/claude-triage-action/report@7d5146314b61d786e47e942e6f1da266a85b6d19
+        uses: brijeshb42/claude-triage-action/report@0d21ef4d5d512acfdb80c5a7af55ad0921476056
         with:
           artifact-name: ${{ needs.triage.outputs.artifact-name }}
           source-run-id: ${{ github.run_id }}
@@ -157,7 +157,7 @@ jobs:
     steps:
       - name: Attempt fix in Cloudflare Sandbox
         id: fix
-        uses: brijeshb42/claude-triage-action/fix@7d5146314b61d786e47e942e6f1da266a85b6d19
+        uses: brijeshb42/claude-triage-action/fix@0d21ef4d5d512acfdb80c5a7af55ad0921476056
         with:
           sandbox-api-url: ${{ vars.SANDBOX_API_URL }}
           sandbox-api-key: ${{ secrets.SANDBOX_API_KEY }}
@@ -178,7 +178,9 @@ jobs:
 
   fix-failure:
     needs: [request, fix]
-    if: always() && needs.fix.result == 'failure'
+    if: >-
+      always() &&
+      contains(fromJSON('["failure", "cancelled"]'), needs.fix.result)
     runs-on: ubuntu-24.04
     timeout-minutes: 3
     permissions:
@@ -187,12 +189,14 @@ jobs:
       - name: Report fix failure
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         env:
+          FIX_RESULT: ${{ needs.fix.result }}
           ISSUE_NUMBER: ${{ needs.request.outputs.issue-number }}
         with:
           script: |
             const marker = '<!-- claude-cloudflare-triage -->';
             const issue_number = Number(process.env.ISSUE_NUMBER);
-            const failureLine = `**Fix:** The sandboxed fix job failed. [Open workflow run](${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}).`;
+            const outcome = process.env.FIX_RESULT === 'cancelled' ? 'timed out or was cancelled' : 'failed';
+            const failureLine = `**Fix:** The sandboxed fix job ${outcome}. [Open workflow run](${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}).`;
             const comments = await github.paginate(github.rest.issues.listComments, {
               owner: context.repo.owner,
               repo: context.repo.repo,
@@ -245,7 +249,7 @@ jobs:
           token: ${{ steps.publisher-token.outputs.token }}
 
       - name: Validate and publish fix result
-        uses: brijeshb42/claude-triage-action/publish@7d5146314b61d786e47e942e6f1da266a85b6d19
+        uses: brijeshb42/claude-triage-action/publish@0d21ef4d5d512acfdb80c5a7af55ad0921476056
         with:
           artifact-name: ${{ needs.fix.outputs.artifact-name }}
           github-token: ${{ steps.publisher-token.outputs.token }}
