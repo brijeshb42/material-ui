@@ -244,5 +244,64 @@ describe('utils/index.js', () => {
       expect(slotPropsFoo.callCount).to.equal(1);
       expect(slotPropsFoo.args[0]).to.deep.equal(['arg1', 'arg2']);
     });
+
+    describe('ref composition', () => {
+      it('composes two ref objects so both receive the element', () => {
+        const defaultRef = React.createRef<HTMLDivElement>();
+        const externalRef = React.createRef<HTMLDivElement>();
+        const merged = mergeSlotProps<{ ref: React.Ref<HTMLDivElement> }>(
+          { ref: externalRef },
+          { ref: defaultRef },
+        ) as { ref: React.RefCallback<HTMLDivElement> };
+
+        const node = document.createElement('div');
+        merged.ref(node);
+
+        expect(defaultRef.current).to.equal(node);
+        expect(externalRef.current).to.equal(node);
+      });
+
+      it('composes a ref object with a callback ref so both receive the element', () => {
+        const defaultRef = React.createRef<HTMLDivElement>();
+        const callbackRef = spy();
+        const merged = mergeSlotProps<{ ref: React.Ref<HTMLDivElement> }>(
+          { ref: callbackRef },
+          { ref: defaultRef },
+        ) as { ref: React.RefCallback<HTMLDivElement> };
+
+        const node = document.createElement('div');
+        merged.ref(node);
+
+        expect(defaultRef.current).to.equal(node);
+        expect(callbackRef.callCount).to.equal(1);
+        expect(callbackRef.args[0][0]).to.equal(node);
+      });
+
+      it('keeps only-external ref unchanged when default has no ref', () => {
+        const externalRef = React.createRef<HTMLDivElement>();
+        const merged = mergeSlotProps<{ ref?: React.Ref<HTMLDivElement>; className?: string }>(
+          { ref: externalRef },
+          { className: 'default' },
+        ) as { ref: React.Ref<HTMLDivElement> };
+
+        expect(merged.ref).to.equal(externalRef);
+      });
+
+      it('composes refs when both sides are functions (ownerState path)', () => {
+        const defaultRef = React.createRef<HTMLDivElement>();
+        const externalRef = React.createRef<HTMLDivElement>();
+
+        const merged = mergeSlotProps(
+          () => ({ ref: externalRef }),
+          () => ({ ref: defaultRef }),
+        )() as { ref: React.RefCallback<HTMLDivElement> };
+
+        const node = document.createElement('div');
+        merged.ref(node);
+
+        expect(defaultRef.current).to.equal(node);
+        expect(externalRef.current).to.equal(node);
+      });
+    });
   });
 });
