@@ -99,7 +99,7 @@ jobs:
 
       - name: Analyze issue with read-only repository access
         id: triage
-        uses: brijeshb42/claude-triage-action/triage@79c43a0feb86115a6a2406641001b6bce5d1ed63
+        uses: brijeshb42/claude-triage-action/triage@b6bd799f572aa07d0eb992f452b01290ef6436d7
         with:
           anthropic-federation-rule-id: ${{ vars.ANTHROPIC_FEDERATION_RULE_ID }}
           anthropic-organization-id: ${{ vars.ANTHROPIC_ORGANIZATION_ID }}
@@ -115,7 +115,9 @@ jobs:
 
   report:
     needs: [request, triage]
-    if: always() && needs.triage.result == 'success'
+    if: >-
+      always() &&
+      (needs.triage.result == 'success' || needs.triage.result == 'failure')
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     permissions:
@@ -123,7 +125,7 @@ jobs:
       issues: write
     steps:
       - name: Report triage outcome
-        uses: brijeshb42/claude-triage-action/report@79c43a0feb86115a6a2406641001b6bce5d1ed63
+        uses: brijeshb42/claude-triage-action/report@b6bd799f572aa07d0eb992f452b01290ef6436d7
         with:
           artifact-name: ${{ needs.triage.outputs.artifact-name }}
           source-run-id: ${{ github.run_id }}
@@ -155,7 +157,7 @@ jobs:
     steps:
       - name: Attempt fix in Cloudflare Sandbox
         id: fix
-        uses: brijeshb42/claude-triage-action/fix@79c43a0feb86115a6a2406641001b6bce5d1ed63
+        uses: brijeshb42/claude-triage-action/fix@b6bd799f572aa07d0eb992f452b01290ef6436d7
         with:
           sandbox-api-url: ${{ vars.SANDBOX_API_URL }}
           sandbox-api-key: ${{ secrets.SANDBOX_API_KEY }}
@@ -243,7 +245,7 @@ jobs:
           token: ${{ steps.publisher-token.outputs.token }}
 
       - name: Validate and publish fix result
-        uses: brijeshb42/claude-triage-action/publish@79c43a0feb86115a6a2406641001b6bce5d1ed63
+        uses: brijeshb42/claude-triage-action/publish@b6bd799f572aa07d0eb992f452b01290ef6436d7
         with:
           artifact-name: ${{ needs.fix.outputs.artifact-name }}
           github-token: ${{ steps.publisher-token.outputs.token }}
