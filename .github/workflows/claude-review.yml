@@ -50,7 +50,7 @@ jobs:
           persist-credentials: false
 
       - name: Triage in Cloudflare Sandbox
-        uses: brijeshb42/claude-triage-action@f0bc2d9f3430236bf50512457f129a6c5031d86c
+        uses: brijeshb42/claude-triage-action@d395009faacabe316ab322946cfa073fb9da9245
         with:
           sandbox-api-url: ${{ vars.SANDBOX_API_URL }}
           sandbox-api-key: ${{ secrets.SANDBOX_API_KEY }}
@@ -62,6 +62,7 @@ jobs:
           issue-number: ${{ github.event.issue.number }}
           artifact-name: claude-triage-${{ github.event.issue.number }}-${{ github.run_id }}
           model: claude-sonnet-4-6
+          max-turns: 200
           preview-directory: examples/triage-preview
           show-full-output: true
           snapshot-excludes: docs/public
@@ -80,7 +81,7 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Validate and publish triage result
-        uses: brijeshb42/claude-triage-action/publish@f0bc2d9f3430236bf50512457f129a6c5031d86c
+        uses: brijeshb42/claude-triage-action/publish@d395009faacabe316ab322946cfa073fb9da9245
         with:
           artifact-name: claude-triage-${{ github.event.issue.number }}-${{ github.run_id }}
           github-token: ${{ github.token }}
