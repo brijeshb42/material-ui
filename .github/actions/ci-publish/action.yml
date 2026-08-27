@@ -1,0 +1,49 @@
+name: pkg.pr.new release
+description: Publishes a new release to pkg.pr.new and exposes its machine-readable metadata.
+
+inputs:
+  pr-comment:
+    description: Configure comments from pkg.pr.new bot.
+    required: false
+    default: 'false'
+
+outputs:
+  metadata-path:
+    description: Absolute path to pkg.pr.new's JSON metadata.
+    value: ${{ steps.publish.outputs.metadata-path }}
+
+runs:
+  using: composite
+  steps:
+    - name: Publish to pkg.pr.new
+      id: publish
+      shell: bash
+      run: |
+        set +e
+        metadata_path="$RUNNER_TEMP/pkg-pr-new-output.json"
+        for attempt in 1 2 3; do
+          echo "Attempt $attempt to publish packages..."
+          rm -f "$metadata_path"
+
+          pnpm exec pkg-pr-new publish $(pnpm code-infra list-workspaces --public-only --output=publish-dir) \
+            --pnpm \
+            --packageManager=pnpm \
+            --peerDeps \
+            --template './examples/*' \
+            --comment=${{ inputs.pr-comment == 'true' && 'update' || 'off' }} \
+            --compact=false \
+            --json="$metadata_path"
+
+          exit_code=$?
+          if [ "$exit_code" -eq 0 ]; then
+            test -s "$metadata_path"
+            echo "metadata-path=$metadata_path" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          if [ "$attempt" -eq 3 ]; then
+            echo "Command failed after $attempt attempts with exit code $exit_code." >&2
+            exit "$exit_code"
+          fi
+          echo "Attempt $attempt failed (exit code $exit_code), retrying after 30 seconds..."
+          sleep 30
+        done

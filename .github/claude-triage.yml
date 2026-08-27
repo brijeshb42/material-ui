@@ -1,0 +1,7 @@
+preview:
+  provider: pkg-pr-new
+  directory: examples/triage-preview
+  package: material-ui-triage-preview
+  validation:
+    - pnpm --dir examples/triage-preview install --ignore-workspace --lockfile=false
+    - pnpm --dir examples/triage-preview --ignore-workspace build
