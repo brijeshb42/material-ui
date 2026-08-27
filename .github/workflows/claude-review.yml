@@ -84,7 +84,6 @@ jobs:
           permission-contents: write
           permission-issues: write
           permission-pull-requests: write
-          permission-workflows: write
 
       - name: Check out repository with publisher credentials
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
