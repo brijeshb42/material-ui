@@ -52,7 +52,7 @@ jobs:
           persist-credentials: false
 
       - name: Triage in Cloudflare Sandbox
-        uses: brijeshb42/claude-triage-action@4277d1ab682fc2980cad37b1cc0ad34032c191b3
+        uses: brijeshb42/claude-triage-action@f0bc2d9f3430236bf50512457f129a6c5031d86c
         with:
           sandbox-api-url: ${{ vars.SANDBOX_API_URL }}
           sandbox-api-key: ${{ secrets.SANDBOX_API_KEY }}
@@ -123,7 +123,7 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Validate and publish triage result
-        uses: brijeshb42/claude-triage-action/publish@4277d1ab682fc2980cad37b1cc0ad34032c191b3
+        uses: brijeshb42/claude-triage-action/publish@f0bc2d9f3430236bf50512457f129a6c5031d86c
         with:
           artifact-name: claude-triage-${{ github.event.issue.number }}-${{ github.run_id }}
           github-token: ${{ github.token }}
