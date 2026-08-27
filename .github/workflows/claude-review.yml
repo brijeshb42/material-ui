@@ -66,49 +66,8 @@ jobs:
           show-full-output: true
           snapshot-excludes: docs/public
 
-  mark-agent-finished:
-    needs: agent
-    if: always() && needs.agent.result != 'skipped'
-    runs-on: ubuntu-24.04
-    timeout-minutes: 2
-    permissions:
-      issues: write
-    steps:
-      - name: Mark sandbox triage as finished
-        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
-        env:
-          AGENT_RESULT: ${{ needs.agent.result }}
-        with:
-          script: |
-            const target = {
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              comment_id: context.payload.comment.id,
-            };
-            const { data: reactions } = await github.rest.reactions.listForIssueComment({
-              ...target,
-              per_page: 100,
-            });
-            const statusReactions = reactions.filter(
-              (reaction) =>
-                reaction.user?.login === 'github-actions[bot]' &&
-                ['eyes', 'rocket', 'hooray', 'confused'].includes(reaction.content),
-            );
-            await Promise.all(
-              statusReactions.map((reaction) =>
-                github.rest.reactions.deleteForIssueComment({
-                  ...target,
-                  reaction_id: reaction.id,
-                }),
-              ),
-            );
-            await github.rest.reactions.createForIssueComment({
-              ...target,
-              content: process.env.AGENT_RESULT === 'success' ? 'rocket' : 'confused',
-            });
-
   publish:
-    needs: [agent, mark-agent-finished]
+    needs: agent
     if: always() && needs.agent.result != 'skipped'
     runs-on: ubuntu-24.04
     timeout-minutes: 10
@@ -128,47 +87,3 @@ jobs:
           issue-number: ${{ github.event.issue.number }}
           default-branch: ${{ github.event.repository.default_branch }}
           preview-directory: examples/triage-preview
-
-  mark-finished:
-    needs: [acknowledge, agent, publish]
-    if: always() && needs.acknowledge.result == 'success'
-    runs-on: ubuntu-24.04
-    timeout-minutes: 2
-    permissions:
-      issues: write
-    steps:
-      - name: Mark triage as finished
-        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
-        env:
-          AGENT_RESULT: ${{ needs.agent.result }}
-          PUBLISH_RESULT: ${{ needs.publish.result }}
-        with:
-          script: |
-            const target = {
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              comment_id: context.payload.comment.id,
-            };
-            const { data: reactions } = await github.rest.reactions.listForIssueComment({
-              ...target,
-              per_page: 100,
-            });
-            const statusReactions = reactions.filter(
-              (reaction) =>
-                reaction.user?.login === 'github-actions[bot]' &&
-                ['eyes', 'rocket', 'hooray', 'confused'].includes(reaction.content),
-            );
-            await Promise.all(
-              statusReactions.map((reaction) =>
-                github.rest.reactions.deleteForIssueComment({
-                  ...target,
-                  reaction_id: reaction.id,
-                }),
-              ),
-            );
-            const succeeded =
-              process.env.AGENT_RESULT === 'success' && process.env.PUBLISH_RESULT === 'success';
-            await github.rest.reactions.createForIssueComment({
-              ...target,
-              content: succeeded ? 'hooray' : 'confused',
-            });
