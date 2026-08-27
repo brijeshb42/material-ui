@@ -225,7 +225,7 @@ jobs:
 
   publish:
     needs: [request, fix]
-    if: needs.fix.result == 'success'
+    if: always() && needs.fix.result == 'success'
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     permissions:
