@@ -244,5 +244,52 @@ describe('utils/index.js', () => {
       expect(slotPropsFoo.callCount).to.equal(1);
       expect(slotPropsFoo.args[0]).to.deep.equal(['arg1', 'arg2']);
     });
+
+    it('composes refs when both default and external slot props have a ref', () => {
+      const defaultRef = React.createRef<HTMLElement>();
+      const externalRefCalls: (HTMLElement | null)[] = [];
+      const externalRef = (el: HTMLElement | null) => {
+        externalRefCalls.push(el);
+      };
+      const fakeEl = document.createElement('div');
+
+      const merged = mergeSlotProps<{ ref?: React.Ref<HTMLElement> }>(
+        { ref: externalRef },
+        { ref: defaultRef },
+      );
+      (merged as any).ref(fakeEl);
+
+      expect(defaultRef.current).to.equal(fakeEl);
+      expect(externalRefCalls).to.deep.equal([fakeEl]);
+    });
+
+    it('composes refs for callback-based slot props when both have a ref', () => {
+      const defaultRef = React.createRef<HTMLElement>();
+      const externalRefCalls: (HTMLElement | null)[] = [];
+      const externalRef = (el: HTMLElement | null) => {
+        externalRefCalls.push(el);
+      };
+      const fakeEl = document.createElement('div');
+
+      const merged = mergeSlotProps<() => { ref?: React.Ref<HTMLElement> }>(
+        () => ({ ref: externalRef }),
+        () => ({ ref: defaultRef }),
+      );
+      (merged as any)({}).ref(fakeEl);
+
+      expect(defaultRef.current).to.equal(fakeEl);
+      expect(externalRefCalls).to.deep.equal([fakeEl]);
+    });
+
+    it('keeps only the external ref when default has no ref', () => {
+      const externalRef = React.createRef<HTMLElement>();
+
+      const merged = mergeSlotProps<{ ref?: React.Ref<HTMLElement>; className?: string }>(
+        { ref: externalRef },
+        { className: 'default' },
+      );
+
+      expect((merged as any).ref).to.equal(externalRef);
+    });
   });
 });

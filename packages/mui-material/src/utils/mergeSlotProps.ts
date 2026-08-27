@@ -1,6 +1,25 @@
+import * as React from 'react';
 import { SlotComponentProps } from '@mui/utils/types';
 import isEventHandler from '@mui/utils/isEventHandler';
 import clsx from 'clsx';
+
+function composeRefs(
+  refA: React.Ref<unknown> | null | undefined,
+  refB: React.Ref<unknown> | null | undefined,
+): React.RefCallback<unknown> {
+  return (instance) => {
+    if (typeof refA === 'function') {
+      refA(instance);
+    } else if (refA) {
+      (refA as React.MutableRefObject<unknown>).current = instance;
+    }
+    if (typeof refB === 'function') {
+      refB(instance);
+    } else if (refB) {
+      (refB as React.MutableRefObject<unknown>).current = instance;
+    }
+  };
+}
 
 export default function mergeSlotProps<
   T extends SlotComponentProps<React.ElementType, {}, {}>,
@@ -47,10 +66,15 @@ export default function mergeSlotProps<
       );
       const handlers = extractHandlers(externalSlotPropsValue, defaultSlotPropsValue);
 
+      const defaultRef = defaultSlotPropsValue?.ref as React.Ref<unknown> | null | undefined;
+      const externalRef = externalSlotPropsValue?.ref as React.Ref<unknown> | null | undefined;
+      const composedRef = defaultRef && externalRef ? composeRefs(defaultRef, externalRef) : undefined;
+
       return {
         ...defaultSlotPropsValue,
         ...externalSlotPropsValue,
         ...handlers,
+        ...(composedRef !== undefined && { ref: composedRef }),
         ...(!!className && { className }),
         ...(defaultSlotPropsValue?.style &&
           externalSlotPropsValue?.style && {
@@ -73,10 +97,16 @@ export default function mergeSlotProps<
   const typedDefaultSlotProps = defaultSlotProps as Record<string, any>;
   const handlers = extractHandlers(externalSlotProps, typedDefaultSlotProps);
   const className = clsx(typedDefaultSlotProps?.className, externalSlotProps?.className);
+
+  const defaultRef = typedDefaultSlotProps?.ref as React.Ref<unknown> | null | undefined;
+  const externalRef = (externalSlotProps as any)?.ref as React.Ref<unknown> | null | undefined;
+  const composedRef = defaultRef && externalRef ? composeRefs(defaultRef, externalRef) : undefined;
+
   return {
     ...defaultSlotProps,
     ...externalSlotProps,
     ...handlers,
+    ...(composedRef !== undefined && { ref: composedRef }),
     ...(!!className && { className }),
     ...(typedDefaultSlotProps?.style &&
       externalSlotProps?.style && {
