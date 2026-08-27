@@ -33,9 +33,7 @@ jobs:
             });
 
   agent:
-    needs: acknowledge
     if: >-
-      needs.acknowledge.result == 'success' &&
       github.event.issue.pull_request == null &&
       contains(github.event.comment.body, '@claude triage') &&
       contains(fromJSON('["OWNER","MEMBER","COLLABORATOR"]'), github.event.comment.author_association)
