@@ -1,0 +1,44 @@
+name: Claude triage publisher smoke test
+
+on:
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  publisher:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - name: Create publisher token
+        id: publisher-token
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+        with:
+          client-id: ${{ vars.CLAUDE_TRIAGE_GITHUB_APP_CLIENT_ID }}
+          private-key: ${{ secrets.CLAUDE_TRIAGE_GITHUB_APP_PRIVATE_KEY }}
+          permission-contents: write
+          permission-issues: write
+          permission-pull-requests: write
+          permission-workflows: write
+
+      - name: Check out repository with publisher credentials
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          token: ${{ steps.publisher-token.outputs.token }}
+
+      - name: Push a temporary publisher branch
+        env:
+          BRANCH: claude/publisher-smoke-${{ github.run_id }}
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git switch -c "$BRANCH"
+          git commit --allow-empty -m 'chore: verify Claude triage publisher credentials'
+          git push origin "$BRANCH"
+
+      - name: Remove the temporary publisher branch
+        if: always()
+        env:
+          BRANCH: claude/publisher-smoke-${{ github.run_id }}
+        run: git push origin --delete "$BRANCH" || true
