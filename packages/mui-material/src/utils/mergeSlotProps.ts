@@ -1,6 +1,14 @@
 import { SlotComponentProps } from '@mui/utils/types';
 import isEventHandler from '@mui/utils/isEventHandler';
+import setRef from '@mui/utils/setRef';
 import clsx from 'clsx';
+
+function composeRefs(refA: any, refB: any): (instance: any) => void {
+  return (instance) => {
+    setRef(refA, instance);
+    setRef(refB, instance);
+  };
+}
 
 export default function mergeSlotProps<
   T extends SlotComponentProps<React.ElementType, {}, {}>,
@@ -46,11 +54,16 @@ export default function mergeSlotProps<
         externalSlotPropsValue?.className,
       );
       const handlers = extractHandlers(externalSlotPropsValue, defaultSlotPropsValue);
+      const composedRef =
+        defaultSlotPropsValue?.ref && externalSlotPropsValue?.ref
+          ? composeRefs(defaultSlotPropsValue.ref, externalSlotPropsValue.ref)
+          : undefined;
 
       return {
         ...defaultSlotPropsValue,
         ...externalSlotPropsValue,
         ...handlers,
+        ...(composedRef && { ref: composedRef }),
         ...(!!className && { className }),
         ...(defaultSlotPropsValue?.style &&
           externalSlotPropsValue?.style && {
@@ -73,10 +86,15 @@ export default function mergeSlotProps<
   const typedDefaultSlotProps = defaultSlotProps as Record<string, any>;
   const handlers = extractHandlers(externalSlotProps, typedDefaultSlotProps);
   const className = clsx(typedDefaultSlotProps?.className, externalSlotProps?.className);
+  const composedRef =
+    typedDefaultSlotProps?.ref && (externalSlotProps as Record<string, any>)?.ref
+      ? composeRefs(typedDefaultSlotProps.ref, (externalSlotProps as Record<string, any>).ref)
+      : undefined;
   return {
     ...defaultSlotProps,
     ...externalSlotProps,
     ...handlers,
+    ...(composedRef && { ref: composedRef }),
     ...(!!className && { className }),
     ...(typedDefaultSlotProps?.style &&
       externalSlotProps?.style && {

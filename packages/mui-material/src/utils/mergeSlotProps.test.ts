@@ -244,5 +244,50 @@ describe('utils/index.js', () => {
       expect(slotPropsFoo.callCount).to.equal(1);
       expect(slotPropsFoo.args[0]).to.deep.equal(['arg1', 'arg2']);
     });
+
+    describe('ref composition', () => {
+      it('composes both refs when external and default slot props both have a ref', () => {
+        const defaultRef = React.createRef<HTMLDivElement>();
+        const externalRef = React.createRef<HTMLDivElement>();
+        const instance = document.createElement('div');
+
+        const merged = mergeSlotProps<{ ref: React.Ref<HTMLDivElement> }>(
+          { ref: externalRef },
+          { ref: defaultRef },
+        );
+
+        (merged as any).ref(instance);
+
+        expect(defaultRef.current).to.equal(instance);
+        expect(externalRef.current).to.equal(instance);
+      });
+
+      it('passes only the default ref through when no external ref is given', () => {
+        const defaultRef = React.createRef<HTMLDivElement>();
+
+        const merged = mergeSlotProps<{ ref?: React.Ref<HTMLDivElement> }>(
+          { 'aria-label': 'foo' } as any,
+          { ref: defaultRef },
+        );
+
+        expect((merged as any).ref).to.equal(defaultRef);
+      });
+
+      it('composes both refs when either slot prop is a function', () => {
+        const defaultRef = React.createRef<HTMLDivElement>();
+        const externalRef = React.createRef<HTMLDivElement>();
+        const instance = document.createElement('div');
+
+        const merged = mergeSlotProps(
+          () => ({ ref: externalRef }),
+          () => ({ ref: defaultRef }),
+        )();
+
+        (merged as any).ref(instance);
+
+        expect(defaultRef.current).to.equal(instance);
+        expect(externalRef.current).to.equal(instance);
+      });
+    });
   });
 });
