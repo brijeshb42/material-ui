@@ -97,9 +97,9 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Analyze issue with read-only repository access
+      - name: Capture issue context and create triage artifact
         id: triage
-        uses: brijeshb42/claude-triage-action/triage@349fb7009bd4fee2f6253d5feddfb18c716bb59b
+        uses: brijeshb42/claude-triage-action/triage@7d5146314b61d786e47e942e6f1da266a85b6d19
         with:
           anthropic-federation-rule-id: ${{ vars.ANTHROPIC_FEDERATION_RULE_ID }}
           anthropic-organization-id: ${{ vars.ANTHROPIC_ORGANIZATION_ID }}
@@ -125,7 +125,7 @@ jobs:
       issues: write
     steps:
       - name: Report triage outcome
-        uses: brijeshb42/claude-triage-action/report@349fb7009bd4fee2f6253d5feddfb18c716bb59b
+        uses: brijeshb42/claude-triage-action/report@7d5146314b61d786e47e942e6f1da266a85b6d19
         with:
           artifact-name: ${{ needs.triage.outputs.artifact-name }}
           source-run-id: ${{ github.run_id }}
@@ -157,7 +157,7 @@ jobs:
     steps:
       - name: Attempt fix in Cloudflare Sandbox
         id: fix
-        uses: brijeshb42/claude-triage-action/fix@349fb7009bd4fee2f6253d5feddfb18c716bb59b
+        uses: brijeshb42/claude-triage-action/fix@7d5146314b61d786e47e942e6f1da266a85b6d19
         with:
           sandbox-api-url: ${{ vars.SANDBOX_API_URL }}
           sandbox-api-key: ${{ secrets.SANDBOX_API_KEY }}
@@ -245,7 +245,7 @@ jobs:
           token: ${{ steps.publisher-token.outputs.token }}
 
       - name: Validate and publish fix result
-        uses: brijeshb42/claude-triage-action/publish@349fb7009bd4fee2f6253d5feddfb18c716bb59b
+        uses: brijeshb42/claude-triage-action/publish@7d5146314b61d786e47e942e6f1da266a85b6d19
         with:
           artifact-name: ${{ needs.fix.outputs.artifact-name }}
           github-token: ${{ steps.publisher-token.outputs.token }}
