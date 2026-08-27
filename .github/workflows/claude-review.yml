@@ -99,7 +99,7 @@ jobs:
 
       - name: Capture issue context and create triage artifact
         id: triage
-        uses: brijeshb42/claude-triage-action/triage@717837a3abfb81745307ba22896520c8dc053686
+        uses: brijeshb42/claude-triage-action/triage@65bb43e352f3ae55df2b19daaa15f081bf49c240
         with:
           anthropic-federation-rule-id: ${{ vars.ANTHROPIC_FEDERATION_RULE_ID }}
           anthropic-organization-id: ${{ vars.ANTHROPIC_ORGANIZATION_ID }}
@@ -125,7 +125,7 @@ jobs:
       issues: write
     steps:
       - name: Report triage outcome
-        uses: brijeshb42/claude-triage-action/report@717837a3abfb81745307ba22896520c8dc053686
+        uses: brijeshb42/claude-triage-action/report@65bb43e352f3ae55df2b19daaa15f081bf49c240
         with:
           artifact-name: ${{ needs.triage.outputs.artifact-name }}
           source-run-id: ${{ github.run_id }}
@@ -157,7 +157,7 @@ jobs:
     steps:
       - name: Attempt fix in Cloudflare Sandbox
         id: fix
-        uses: brijeshb42/claude-triage-action/fix@717837a3abfb81745307ba22896520c8dc053686
+        uses: brijeshb42/claude-triage-action/fix@65bb43e352f3ae55df2b19daaa15f081bf49c240
         with:
           sandbox-api-url: ${{ vars.SANDBOX_API_URL }}
           sandbox-api-key: ${{ secrets.SANDBOX_API_KEY }}
@@ -241,15 +241,14 @@ jobs:
           permission-issues: write
           permission-pull-requests: write
 
-      - name: Check out the exact triaged commit with publisher credentials
+      - name: Check out the current default branch with publisher credentials
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          fetch-depth: 0
-          ref: ${{ needs.fix.outputs.base-sha }}
+          ref: ${{ github.event.repository.default_branch }}
           token: ${{ steps.publisher-token.outputs.token }}
 
       - name: Validate and publish fix result
-        uses: brijeshb42/claude-triage-action/publish@717837a3abfb81745307ba22896520c8dc053686
+        uses: brijeshb42/claude-triage-action/publish@65bb43e352f3ae55df2b19daaa15f081bf49c240
         with:
           artifact-name: ${{ needs.fix.outputs.artifact-name }}
           github-token: ${{ steps.publisher-token.outputs.token }}
