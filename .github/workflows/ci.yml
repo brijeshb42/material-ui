@@ -95,10 +95,47 @@ jobs:
           # https://docs.github.com/en/actions/security-guides/automatic-token-authentication#about-the-github_token-secret
           token: ${{secrets.GITHUB_TOKEN}}
 
-  report-triage-preview:
-    name: Report triage preview
+  triage-preview-eligibility:
+    name: Check triage preview eligibility
     if: github.event_name == 'pull_request'
     needs: test-dev
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: read
+    outputs:
+      eligible: ${{ steps.check.outputs.eligible }}
+    steps:
+      - name: Check the live pull request
+        id: check
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        env:
+          PUBLISHER_LOGIN: automations-by-brijesh[bot]
+        with:
+          script: |
+            const { data: pullRequest } = await github.rest.pulls.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: context.payload.pull_request.number,
+            });
+            const labels = new Set(pullRequest.labels.map((label) => label.name));
+            const body = String(pullRequest.body || '');
+            const eligible =
+              pullRequest.user?.login === process.env.PUBLISHER_LOGIN &&
+              pullRequest.head.repo?.full_name === `${context.repo.owner}/${context.repo.repo}` &&
+              pullRequest.head.ref.startsWith('claude/triage-') &&
+              labels.has('claude-triage') &&
+              labels.has('claude-triage-preview') &&
+              body.includes('<!-- claude-triage-issue:') &&
+              body.includes('<!-- claude-triage-preview:pending -->');
+            core.setOutput('eligible', String(eligible));
+            if (!eligible) {
+              core.notice('This pull request was not created by the Claude fix publisher.');
+            }
+
+  report-triage-preview:
+    name: Report triage preview
+    if: needs.triage-preview-eligibility.outputs.eligible == 'true'
+    needs: triage-preview-eligibility
     runs-on: ubuntu-latest
     permissions:
       actions: read
