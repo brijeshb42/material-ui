@@ -102,6 +102,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       actions: read
+      checks: read
       contents: read
       issues: write
       pull-requests: write
@@ -160,9 +161,46 @@ jobs:
             if (!template || typeof template.url !== 'string') {
               throw new Error('pkg.pr.new did not generate the configured preview template.');
             }
-            const previewUrl = new URL(template.url);
-            if (previewUrl.origin !== 'https://pkg.pr.new') {
-              throw new Error(`Refusing an unexpected preview URL origin: ${previewUrl.origin}`);
+
+            const checkRuns = await github.paginate(github.rest.checks.listForRef, {
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              ref: eventHeadSha,
+              per_page: 100,
+            });
+            const publicationCheck = checkRuns.find(
+              (checkRun) =>
+                checkRun.name === 'Continuous Releases' &&
+                checkRun.app?.slug === 'pkg-pr-new' &&
+                checkRun.conclusion === 'success',
+            );
+            if (!publicationCheck) {
+              throw new Error('The successful pkg.pr.new publication check was not found.');
+            }
+            const { data: resolvedPublicationCheck } = await github.rest.checks.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              check_run_id: publicationCheck.id,
+            });
+            const templateLinePrefix = `- [${process.env.PREVIEW_PACKAGE}](`;
+            const templateLine = String(resolvedPublicationCheck.output.text || '')
+              .split('\n')
+              .find((line) => line.startsWith(templateLinePrefix) && line.endsWith(')'));
+            if (!templateLine) {
+              throw new Error('The pkg.pr.new check did not report the configured preview URL.');
+            }
+            const previewUrl = new URL(templateLine.slice(templateLinePrefix.length, -1));
+            const previewPath = previewUrl.pathname.split('/').filter(Boolean);
+            if (
+              previewUrl.origin !== 'https://pkg.pr.new' ||
+              previewPath.length !== 2 ||
+              previewPath[0] !== 'template' ||
+              previewPath[1].length !== 36 ||
+              ![...previewPath[1]].every((character) =>
+                '0123456789abcdef-'.includes(character),
+              )
+            ) {
+              throw new Error(`Refusing an unexpected preview URL: ${previewUrl.href}`);
             }
 
             const shortSha = eventHeadSha.slice(0, 7);
