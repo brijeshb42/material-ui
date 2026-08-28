@@ -1,6 +1,18 @@
+import * as React from 'react';
 import { SlotComponentProps } from '@mui/utils/types';
 import isEventHandler from '@mui/utils/isEventHandler';
+import setRef from '@mui/utils/setRef';
 import clsx from 'clsx';
+
+function composeRefs<T>(
+  defaultRef: React.Ref<T>,
+  externalRef: React.Ref<T>,
+): React.RefCallback<T> {
+  return (instance) => {
+    setRef(defaultRef, instance);
+    setRef(externalRef, instance);
+  };
+}
 
 export default function mergeSlotProps<
   T extends SlotComponentProps<React.ElementType, {}, {}>,
@@ -51,6 +63,10 @@ export default function mergeSlotProps<
         ...defaultSlotPropsValue,
         ...externalSlotPropsValue,
         ...handlers,
+        ...(defaultSlotPropsValue?.ref &&
+          externalSlotPropsValue?.ref && {
+            ref: composeRefs(defaultSlotPropsValue.ref, externalSlotPropsValue.ref),
+          }),
         ...(!!className && { className }),
         ...(defaultSlotPropsValue?.style &&
           externalSlotPropsValue?.style && {
@@ -77,6 +93,10 @@ export default function mergeSlotProps<
     ...defaultSlotProps,
     ...externalSlotProps,
     ...handlers,
+    ...(typedDefaultSlotProps?.ref &&
+      externalSlotProps?.ref && {
+        ref: composeRefs(typedDefaultSlotProps.ref, externalSlotProps.ref),
+      }),
     ...(!!className && { className }),
     ...(typedDefaultSlotProps?.style &&
       externalSlotProps?.style && {

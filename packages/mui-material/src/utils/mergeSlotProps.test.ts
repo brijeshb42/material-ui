@@ -244,5 +244,62 @@ describe('utils/index.js', () => {
       expect(slotPropsFoo.callCount).to.equal(1);
       expect(slotPropsFoo.args[0]).to.deep.equal(['arg1', 'arg2']);
     });
+
+    describe('ref composition', () => {
+      it('composes two object refs in the static path', () => {
+        const defaultRef = React.createRef<HTMLDivElement>();
+        const externalRef = React.createRef<HTMLDivElement>();
+        const merged = mergeSlotProps<{ ref: React.Ref<HTMLDivElement> }>(
+          { ref: externalRef },
+          { ref: defaultRef },
+        );
+        const el = document.createElement('div') as unknown as HTMLDivElement;
+        (merged as any).ref(el);
+        expect(defaultRef.current).to.equal(el);
+        expect(externalRef.current).to.equal(el);
+      });
+
+      it('composes two callback refs in the static path', () => {
+        let defaultReceived: HTMLDivElement | null = null;
+        let externalReceived: HTMLDivElement | null = null;
+        const defaultRef = (el: HTMLDivElement | null) => {
+          defaultReceived = el;
+        };
+        const externalRef = (el: HTMLDivElement | null) => {
+          externalReceived = el;
+        };
+        const merged = mergeSlotProps<{ ref: React.Ref<HTMLDivElement> }>(
+          { ref: externalRef },
+          { ref: defaultRef },
+        );
+        const el = document.createElement('div') as unknown as HTMLDivElement;
+        (merged as any).ref(el);
+        expect(defaultReceived).to.equal(el);
+        expect(externalReceived).to.equal(el);
+      });
+
+      it('composes refs in the function path', () => {
+        const defaultRef = React.createRef<HTMLDivElement>();
+        const externalRef = React.createRef<HTMLDivElement>();
+        const merged = mergeSlotProps(
+          () => ({ ref: externalRef }),
+          () => ({ ref: defaultRef }),
+        );
+        const result = (merged as any)({});
+        const el = document.createElement('div') as unknown as HTMLDivElement;
+        result.ref(el);
+        expect(defaultRef.current).to.equal(el);
+        expect(externalRef.current).to.equal(el);
+      });
+
+      it('does not compose when only one side has a ref (static path)', () => {
+        const externalRef = React.createRef<HTMLDivElement>();
+        const merged = mergeSlotProps<{ ref?: React.Ref<HTMLDivElement>; className?: string }>(
+          { ref: externalRef },
+          { className: 'default' },
+        );
+        expect((merged as any).ref).to.equal(externalRef);
+      });
+    });
   });
 });

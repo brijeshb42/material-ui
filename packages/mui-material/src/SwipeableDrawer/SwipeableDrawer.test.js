@@ -766,6 +766,35 @@ describe('<SwipeableDrawer />', () => {
     expect(ref.current).not.to.equal(null);
   });
 
+  it('should not crash when swiping to close with an external ref in slotProps.paper', () => {
+    const externalRef = React.createRef();
+    render(
+      <SwipeableDrawer
+        onOpen={() => {}}
+        onClose={() => {}}
+        open
+        slotProps={{
+          paper: { ref: externalRef, component: FakePaper },
+        }}
+      >
+        <div data-testid="drawer-content">SwipeableDrawer</div>
+      </SwipeableDrawer>,
+    );
+
+    expect(externalRef.current).not.to.equal(null);
+
+    const drawer = screen.getByTestId('drawer-content');
+    fireEvent.touchStart(drawer, {
+      touches: [new Touch({ identifier: 0, target: drawer, pageX: 150, clientY: 0 })],
+    });
+    fireEvent.touchMove(drawer, {
+      touches: [new Touch({ identifier: 0, target: drawer, pageX: 50, clientY: 0 })],
+    });
+    fireEvent.touchEnd(drawer, {
+      changedTouches: [new Touch({ identifier: 0, target: drawer, pageX: 0, clientY: 0 })],
+    });
+  });
+
   describe('disableSwipeToOpen', () => {
     it('should not support swipe to open if disableSwipeToOpen is set', () => {
       const handleOpen = spy();
