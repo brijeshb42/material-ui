@@ -99,7 +99,7 @@ jobs:
 
       - name: Capture issue context and create triage artifact
         id: triage
-        uses: brijeshb42/claude-triage-action/triage@65bb43e352f3ae55df2b19daaa15f081bf49c240
+        uses: brijeshb42/claude-triage-action/triage@07ba6c091618ae0c3b88a3afebab7e6de2b76d8b
         with:
           anthropic-federation-rule-id: ${{ vars.ANTHROPIC_FEDERATION_RULE_ID }}
           anthropic-organization-id: ${{ vars.ANTHROPIC_ORGANIZATION_ID }}
@@ -110,6 +110,8 @@ jobs:
           trigger-comment-id: ${{ needs.request.outputs.trigger-comment-id }}
           artifact-name: claude-triage-v1-${{ needs.request.outputs.issue-number }}-${{ github.run_id }}-${{ github.run_attempt }}
           model: claude-sonnet-4-6
+          reasoning-effort: high
+          review-depth: medium
           max-turns: 60
           show-full-output: false
 
@@ -125,7 +127,7 @@ jobs:
       issues: write
     steps:
       - name: Report triage outcome
-        uses: brijeshb42/claude-triage-action/report@65bb43e352f3ae55df2b19daaa15f081bf49c240
+        uses: brijeshb42/claude-triage-action/report@07ba6c091618ae0c3b88a3afebab7e6de2b76d8b
         with:
           artifact-name: ${{ needs.triage.outputs.artifact-name }}
           source-run-id: ${{ github.run_id }}
@@ -157,7 +159,7 @@ jobs:
     steps:
       - name: Attempt fix in Cloudflare Sandbox
         id: fix
-        uses: brijeshb42/claude-triage-action/fix@65bb43e352f3ae55df2b19daaa15f081bf49c240
+        uses: brijeshb42/claude-triage-action/fix@07ba6c091618ae0c3b88a3afebab7e6de2b76d8b
         with:
           sandbox-api-url: ${{ vars.SANDBOX_API_URL }}
           sandbox-api-key: ${{ secrets.SANDBOX_API_KEY }}
@@ -171,6 +173,8 @@ jobs:
           triage-artifact-name: ${{ needs.request.outputs.command == 'triage' && needs.triage.outputs.artifact-name || '' }}
           force: ${{ needs.request.outputs.command == 'fix' }}
           model: claude-sonnet-4-6
+          reasoning-effort: high
+          review-depth: medium
           max-turns: 200
           preview-directory: examples/triage-preview
           show-full-output: true
@@ -248,7 +252,7 @@ jobs:
           token: ${{ steps.publisher-token.outputs.token }}
 
       - name: Validate and publish fix result
-        uses: brijeshb42/claude-triage-action/publish@65bb43e352f3ae55df2b19daaa15f081bf49c240
+        uses: brijeshb42/claude-triage-action/publish@07ba6c091618ae0c3b88a3afebab7e6de2b76d8b
         with:
           artifact-name: ${{ needs.fix.outputs.artifact-name }}
           github-token: ${{ steps.publisher-token.outputs.token }}
