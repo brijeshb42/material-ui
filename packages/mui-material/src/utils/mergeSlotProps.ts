@@ -1,6 +1,17 @@
 import { SlotComponentProps } from '@mui/utils/types';
 import isEventHandler from '@mui/utils/isEventHandler';
+import setRef from '@mui/utils/setRef';
 import clsx from 'clsx';
+
+function composeRefs<T>(
+  refA: React.Ref<T> | undefined,
+  refB: React.Ref<T> | undefined,
+): React.RefCallback<T> {
+  return (instance: T | null) => {
+    setRef(refA as React.MutableRefObject<T | null> | ((instance: T | null) => void), instance);
+    setRef(refB as React.MutableRefObject<T | null> | ((instance: T | null) => void), instance);
+  };
+}
 
 export default function mergeSlotProps<
   T extends SlotComponentProps<React.ElementType, {}, {}>,
@@ -46,11 +57,16 @@ export default function mergeSlotProps<
         externalSlotPropsValue?.className,
       );
       const handlers = extractHandlers(externalSlotPropsValue, defaultSlotPropsValue);
+      const composedRef =
+        defaultSlotPropsValue?.ref && externalSlotPropsValue?.ref
+          ? { ref: composeRefs(externalSlotPropsValue.ref, defaultSlotPropsValue.ref) }
+          : undefined;
 
       return {
         ...defaultSlotPropsValue,
         ...externalSlotPropsValue,
         ...handlers,
+        ...composedRef,
         ...(!!className && { className }),
         ...(defaultSlotPropsValue?.style &&
           externalSlotPropsValue?.style && {
@@ -73,10 +89,20 @@ export default function mergeSlotProps<
   const typedDefaultSlotProps = defaultSlotProps as Record<string, any>;
   const handlers = extractHandlers(externalSlotProps, typedDefaultSlotProps);
   const className = clsx(typedDefaultSlotProps?.className, externalSlotProps?.className);
+  const composedRef =
+    typedDefaultSlotProps?.ref && (externalSlotProps as Record<string, any>)?.ref
+      ? {
+          ref: composeRefs(
+            (externalSlotProps as Record<string, any>).ref,
+            typedDefaultSlotProps.ref,
+          ),
+        }
+      : undefined;
   return {
     ...defaultSlotProps,
     ...externalSlotProps,
     ...handlers,
+    ...composedRef,
     ...(!!className && { className }),
     ...(typedDefaultSlotProps?.style &&
       externalSlotProps?.style && {

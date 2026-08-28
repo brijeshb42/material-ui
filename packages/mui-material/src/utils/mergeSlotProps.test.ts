@@ -244,5 +244,81 @@ describe('utils/index.js', () => {
       expect(slotPropsFoo.callCount).to.equal(1);
       expect(slotPropsFoo.args[0]).to.deep.equal(['arg1', 'arg2']);
     });
+
+    describe('ref composition', () => {
+      it('composes two object refs so both receive the element (static path)', () => {
+        const internalRef: React.MutableRefObject<HTMLDivElement | null> = { current: null };
+        const externalRef: React.MutableRefObject<HTMLDivElement | null> = { current: null };
+
+        const merged = mergeSlotProps<{ ref: React.Ref<HTMLDivElement> }>(
+          { ref: externalRef },
+          { ref: internalRef },
+        );
+
+        const fakeEl = document.createElement('div') as HTMLDivElement;
+        (merged as any).ref(fakeEl);
+
+        expect(internalRef.current).to.equal(fakeEl);
+        expect(externalRef.current).to.equal(fakeEl);
+      });
+
+      it('composes two callback refs so both are called (static path)', () => {
+        const internalCb = spy();
+        const externalCb = spy();
+
+        const merged = mergeSlotProps<{ ref: React.RefCallback<HTMLDivElement> }>(
+          { ref: externalCb },
+          { ref: internalCb },
+        );
+
+        const fakeEl = document.createElement('div') as HTMLDivElement;
+        (merged as any).ref(fakeEl);
+
+        expect(internalCb.callCount).to.equal(1);
+        expect(internalCb.args[0][0]).to.equal(fakeEl);
+        expect(externalCb.callCount).to.equal(1);
+        expect(externalCb.args[0][0]).to.equal(fakeEl);
+      });
+
+      it('composes two object refs so both receive the element (function path)', () => {
+        const internalRef: React.MutableRefObject<HTMLDivElement | null> = { current: null };
+        const externalRef: React.MutableRefObject<HTMLDivElement | null> = { current: null };
+
+        const merged = mergeSlotProps<
+          (ownerState: OwnerState) => { ref: React.Ref<HTMLDivElement> },
+          { ref: React.Ref<HTMLDivElement> }
+        >(
+          () => ({ ref: externalRef }),
+          { ref: internalRef },
+        )({ className: '' });
+
+        const fakeEl = document.createElement('div') as HTMLDivElement;
+        (merged as any).ref(fakeEl);
+
+        expect(internalRef.current).to.equal(fakeEl);
+        expect(externalRef.current).to.equal(fakeEl);
+      });
+
+      it('composes two callback refs so both are called (function path)', () => {
+        const internalCb = spy();
+        const externalCb = spy();
+
+        const merged = mergeSlotProps<
+          (ownerState: OwnerState) => { ref: React.RefCallback<HTMLDivElement> },
+          { ref: React.RefCallback<HTMLDivElement> }
+        >(
+          () => ({ ref: externalCb }),
+          { ref: internalCb },
+        )({ className: '' });
+
+        const fakeEl = document.createElement('div') as HTMLDivElement;
+        (merged as any).ref(fakeEl);
+
+        expect(internalCb.callCount).to.equal(1);
+        expect(internalCb.args[0][0]).to.equal(fakeEl);
+        expect(externalCb.callCount).to.equal(1);
+        expect(externalCb.args[0][0]).to.equal(fakeEl);
+      });
+    });
   });
 });
