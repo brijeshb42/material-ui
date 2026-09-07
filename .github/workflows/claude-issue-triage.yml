@@ -162,7 +162,7 @@ jobs:
       # The runner action captures issue context itself; it does not replay triage artifacts.
       - name: Analyze and attempt a fix with Claude Code inside gVisor
         id: fix
-        uses: brijeshb42/claude-triage-action/runner@2b4eb0ff642857d1a47fd9db3228761a5a9d344e # runner prototype 2b4eb0f
+        uses: brijeshb42/claude-triage-action/runner@80a31740f1167e64a52405902ae45c16615d7bad # prebuilt runner 80a3174
         with:
           anthropic-federation-rule-id: ${{ vars.ANTHROPIC_FEDERATION_RULE_ID }}
           anthropic-organization-id: ${{ vars.ANTHROPIC_ORGANIZATION_ID }}
@@ -172,6 +172,7 @@ jobs:
           issue-number: ${{ needs.request.outputs.issue-number }}
           artifact-name: claude-runner-fix-${{ needs.request.outputs.issue-number }}-${{ github.run_id }}-${{ github.run_attempt }}
           dependency-install-command: pnpm install --frozen-lockfile --prefer-offline
+          repository-node-version: auto
           dependency-install-timeout-ms: 1200000
           model: claude-sonnet-4-6
           reasoning-effort: high
@@ -253,7 +254,7 @@ jobs:
           token: ${{ steps.publisher-token.outputs.token }}
 
       - name: Validate and publish fix result
-        uses: brijeshb42/claude-triage-action/runner/publish@2b4eb0ff642857d1a47fd9db3228761a5a9d344e # runner prototype 2b4eb0f
+        uses: brijeshb42/claude-triage-action/runner/publish@80a31740f1167e64a52405902ae45c16615d7bad # prebuilt runner 80a3174
         with:
           artifact-name: ${{ needs.fix.outputs.artifact-name }}
           github-token: ${{ steps.publisher-token.outputs.token }}
