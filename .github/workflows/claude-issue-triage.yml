@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
     inputs:
       issue-number:
-        description: Issue whose newest eligible triage should start a fix
+        description: Issue to analyze and attempt to fix inside the runner sandbox
         required: true
         type: string
 
@@ -99,7 +99,7 @@ jobs:
 
       - name: Capture issue context and create triage artifact
         id: triage
-        uses: brijeshb42/claude-triage-action/triage@ceebc72542b5e81244866e35a3665b48cd8de61b
+        uses: brijeshb42/claude-triage-action/triage@ceebc72542b5e81244866e35a3665b48cd8de61b # triage prototype ceebc725
         with:
           anthropic-federation-rule-id: ${{ vars.ANTHROPIC_FEDERATION_RULE_ID }}
           anthropic-organization-id: ${{ vars.ANTHROPIC_ORGANIZATION_ID }}
@@ -126,7 +126,7 @@ jobs:
       issues: write
     steps:
       - name: Report triage outcome
-        uses: brijeshb42/claude-triage-action/report@ceebc72542b5e81244866e35a3665b48cd8de61b
+        uses: brijeshb42/claude-triage-action/report@ceebc72542b5e81244866e35a3665b48cd8de61b # triage prototype ceebc725
         with:
           artifact-name: ${{ needs.triage.outputs.artifact-name }}
           source-run-id: ${{ github.run_id }}
@@ -144,38 +144,41 @@ jobs:
         (needs.triage.result == 'success' && needs.triage.outputs.should-fix == 'true')
       )
     runs-on: ubuntu-24.04
-    timeout-minutes: 60
+    timeout-minutes: 65
     permissions:
-      actions: read
       contents: read
       id-token: write
+      issues: read
     outputs:
       artifact-name: ${{ steps.fix.outputs.artifact-name }}
-      base-sha: ${{ steps.fix.outputs.base-sha }}
-      disposition: ${{ steps.fix.outputs.disposition }}
-      triage-artifact-name: ${{ steps.fix.outputs.triage-artifact-name }}
-      triage-run-id: ${{ steps.fix.outputs.triage-run-id }}
     steps:
-      - name: Attempt fix in Cloudflare Sandbox
-        id: fix
-        uses: brijeshb42/claude-triage-action/fix@ceebc72542b5e81244866e35a3665b48cd8de61b
+      - name: Check out the trusted fix base without credentials
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          sandbox-api-url: ${{ vars.SANDBOX_API_URL }}
-          sandbox-api-key: ${{ secrets.SANDBOX_API_KEY }}
+          # Automatic handoff retains the analyzed base; explicit fixes use current master.
+          ref: ${{ needs.triage.outputs.base-sha || github.event.repository.default_branch }}
+          persist-credentials: false
+
+      # The runner action captures issue context itself; it does not replay triage artifacts.
+      - name: Analyze and attempt a fix with Claude Code inside gVisor
+        id: fix
+        uses: brijeshb42/claude-triage-action/runner@2b4eb0ff642857d1a47fd9db3228761a5a9d344e # runner prototype 2b4eb0f
+        with:
           anthropic-federation-rule-id: ${{ vars.ANTHROPIC_FEDERATION_RULE_ID }}
           anthropic-organization-id: ${{ vars.ANTHROPIC_ORGANIZATION_ID }}
           anthropic-service-account-id: ${{ vars.ANTHROPIC_SERVICE_ACCOUNT_ID }}
           anthropic-workspace-id: ${{ vars.ANTHROPIC_WORKSPACE_ID }}
           github-token: ${{ github.token }}
           issue-number: ${{ needs.request.outputs.issue-number }}
-          artifact-name: claude-fix-v1-${{ needs.request.outputs.issue-number }}-${{ github.run_id }}-${{ github.run_attempt }}
-          triage-artifact-name: ${{ needs.request.outputs.command == 'triage' && needs.triage.outputs.artifact-name || '' }}
-          force: ${{ needs.request.outputs.command == 'fix' }}
+          artifact-name: claude-runner-fix-${{ needs.request.outputs.issue-number }}-${{ github.run_id }}-${{ github.run_attempt }}
+          dependency-install-command: pnpm install --frozen-lockfile --prefer-offline
+          dependency-install-timeout-ms: 1200000
           model: claude-sonnet-4-6
           reasoning-effort: high
           max-turns: 200
-          preview-directory: examples/triage-preview
-          show-full-output: true
+          max-api-requests: 400
+          max-output-tokens-per-request: 16384
+          agent-timeout-ms: 1800000
           snapshot-excludes: docs/public
 
   fix-failure:
@@ -250,10 +253,9 @@ jobs:
           token: ${{ steps.publisher-token.outputs.token }}
 
       - name: Validate and publish fix result
-        uses: brijeshb42/claude-triage-action/publish@ceebc72542b5e81244866e35a3665b48cd8de61b
+        uses: brijeshb42/claude-triage-action/runner/publish@2b4eb0ff642857d1a47fd9db3228761a5a9d344e # runner prototype 2b4eb0f
         with:
           artifact-name: ${{ needs.fix.outputs.artifact-name }}
           github-token: ${{ steps.publisher-token.outputs.token }}
           issue-number: ${{ needs.request.outputs.issue-number }}
           default-branch: ${{ github.event.repository.default_branch }}
-          preview-directory: examples/triage-preview
