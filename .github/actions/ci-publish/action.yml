@@ -25,7 +25,7 @@ runs:
           echo "Attempt $attempt to publish packages..."
           rm -f "$metadata_path"
 
-          pnpm exec pkg-pr-new publish $(pnpm code-infra list-workspaces --public-only --output=publish-dir) \
+          pnpm exec pkg-pr-new publish $(pnpm code-infra list-workspaces --public-only --output=path) \
             --pnpm \
             --packageManager=pnpm \
             --peerDeps \
