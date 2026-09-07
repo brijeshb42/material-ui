@@ -204,6 +204,34 @@ describe('utils/index.js', () => {
       });
     });
 
+    it('composes refs when both default and external slot props have a ref', () => {
+      const defaultRef: { current: string | null } = { current: null };
+      const externalRef: { current: string | null } = { current: null };
+
+      const merged = mergeSlotProps<{ ref: React.Ref<string> }>(
+        { ref: externalRef as React.RefObject<string> },
+        { ref: defaultRef as React.RefObject<string> },
+      );
+
+      (merged.ref as (instance: string | null) => void)('element');
+      expect(defaultRef.current).to.equal('element');
+      expect(externalRef.current).to.equal('element');
+    });
+
+    it('composes refs for function slot props when both have a ref', () => {
+      const defaultRef: { current: string | null } = { current: null };
+      const externalRef: { current: string | null } = { current: null };
+
+      const merged = mergeSlotProps<(ownerState: {}) => { ref: React.Ref<string> }>(
+        () => ({ ref: externalRef as React.RefObject<string> }),
+        () => ({ ref: defaultRef as React.RefObject<string> }),
+      )({});
+
+      (merged.ref as (instance: string | null) => void)('element');
+      expect(defaultRef.current).to.equal('element');
+      expect(externalRef.current).to.equal('element');
+    });
+
     it('automatically merge function based on the default slot props', () => {
       const slotPropsOnClick = spy();
       const defaultPropsOnClick = spy();
