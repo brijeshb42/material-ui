@@ -1,0 +1,35 @@
+name: Copilot Setup Steps
+
+# Preinstalls dependencies for Copilot cloud agent sessions so the agent does not
+# spend its 59-minute budget discovering the toolchain. Runs as a normal workflow
+# only when this file changes, which validates the steps before Copilot uses them.
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - .github/workflows/copilot-setup-steps.yml
+  pull_request:
+    paths:
+      - .github/workflows/copilot-setup-steps.yml
+
+permissions: {}
+
+jobs:
+  # The job name is a contract. Copilot only picks up `copilot-setup-steps`.
+  copilot-setup-steps:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Set up pnpm
+        uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86 # v6.0.10
+      - name: Use Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '22.23.2'
+          cache: 'pnpm'
+      - run: pnpm install
