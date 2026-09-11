@@ -1079,4 +1079,102 @@ describe('<SwipeableDrawer />', () => {
       });
     });
   });
+
+  describe('paper slot ref composition', () => {
+    it('should merge external paper ref with internal ref', function test() {
+      const externalRef = React.createRef();
+      const handleClose = spy();
+      const { rerender } = render(
+        <SwipeableDrawer
+          onOpen={() => {}}
+          onClose={handleClose}
+          open
+          slotProps={{ paper: { ref: externalRef } }}
+        >
+          <div>Drawer content</div>
+        </SwipeableDrawer>,
+      );
+
+      expect(externalRef.current).not.to.equal(null);
+      expect(externalRef.current).to.be.instanceOf(HTMLElement);
+
+      rerender(
+        <SwipeableDrawer
+          onOpen={() => {}}
+          onClose={handleClose}
+          open
+          slotProps={{ paper: { ref: externalRef } }}
+        >
+          <div>Drawer content</div>
+        </SwipeableDrawer>,
+      );
+
+      expect(externalRef.current).not.to.equal(null);
+    });
+
+    it('should not crash with external paper ref and internal touch handling', () => {
+      const externalRef = React.createRef();
+      const handleClose = spy();
+      render(
+        <SwipeableDrawer
+          onOpen={() => {}}
+          onClose={handleClose}
+          open
+          slotProps={{ paper: { ref: externalRef } }}
+        >
+          <div>Drawer content</div>
+        </SwipeableDrawer>,
+      );
+
+      const paper = externalRef.current;
+      expect(paper).not.to.equal(null);
+
+      const target = paper;
+
+      // Simulate a swipe gesture that triggers close
+      fireEvent.touchStart(target, {
+        touches: [
+          new Touch({
+            identifier: 0,
+            target,
+            clientX: 250,
+            clientY: 0,
+          }),
+        ],
+      });
+
+      fireEvent.touchMove(target, {
+        touches: [
+          new Touch({
+            identifier: 0,
+            target,
+            clientX: 200,
+            clientY: 0,
+          }),
+        ],
+      });
+
+      fireEvent.touchMove(target, {
+        touches: [
+          new Touch({
+            identifier: 0,
+            target,
+            clientX: 100,
+            clientY: 0,
+          }),
+        ],
+      });
+
+      fireEvent.touchEnd(target, {
+        changedTouches: [
+          new Touch({
+            identifier: 0,
+            target,
+            clientX: 100,
+            clientY: 0,
+          }),
+        ],
+      });
+    });
+  });
 });

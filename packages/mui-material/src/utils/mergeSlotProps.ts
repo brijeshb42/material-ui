@@ -31,6 +31,29 @@ export default function mergeSlotProps<
     });
     return handlers;
   }
+  function mergeRefs(
+    defaultRef: any,
+    externalRef: any,
+  ) {
+    if (!defaultRef) {
+      return externalRef;
+    }
+    if (!externalRef) {
+      return defaultRef;
+    }
+    return (node: any) => {
+      if (typeof defaultRef === 'function') {
+        defaultRef(node);
+      } else if (defaultRef != null) {
+        defaultRef.current = node;
+      }
+      if (typeof externalRef === 'function') {
+        externalRef(node);
+      } else if (externalRef != null) {
+        externalRef.current = node;
+      }
+    };
+  }
   if (typeof externalSlotProps === 'function' || typeof defaultSlotProps === 'function') {
     return ((ownerState: Record<string, any>) => {
       const defaultSlotPropsValue =
@@ -68,6 +91,9 @@ export default function mergeSlotProps<
             : [externalSlotPropsValue.sx]),
         ];
       }
+      if (defaultSlotPropsValue?.ref || externalSlotPropsValue?.ref) {
+        result.ref = mergeRefs(defaultSlotPropsValue?.ref, externalSlotPropsValue?.ref);
+      }
       return result;
     }) as U;
   }
@@ -92,6 +118,9 @@ export default function mergeSlotProps<
         : [typedDefaultSlotProps.sx]),
       ...(Array.isArray(externalSlotProps.sx) ? externalSlotProps.sx : [externalSlotProps.sx]),
     ];
+  }
+  if (typedDefaultSlotProps?.ref || externalSlotProps?.ref) {
+    result.ref = mergeRefs(typedDefaultSlotProps?.ref, externalSlotProps?.ref);
   }
   return result as U;
 }
