@@ -11,6 +11,18 @@ export default function mergeSlotProps<
   if (!externalSlotProps) {
     return defaultSlotProps as unknown as U;
   }
+
+  function setRef(
+    ref: React.MutableRefObject<any> | ((instance: any) => void) | null | undefined,
+    value: any,
+  ): void {
+    if (typeof ref === 'function') {
+      ref(value);
+    } else if (ref) {
+      ref.current = value;
+    }
+  }
+
   function extractHandlers(
     externalSlotPropsValue: Record<string, any>,
     defaultSlotPropsValue: Record<string, any>,
@@ -68,6 +80,15 @@ export default function mergeSlotProps<
             : [externalSlotPropsValue.sx]),
         ];
       }
+      if (
+        (defaultSlotPropsValue?.ref || externalSlotPropsValue?.ref) &&
+        defaultSlotPropsValue?.ref !== externalSlotPropsValue?.ref
+      ) {
+        result.ref = (value: any) => {
+          setRef(defaultSlotPropsValue?.ref, value);
+          setRef(externalSlotPropsValue?.ref, value);
+        };
+      }
       return result;
     }) as U;
   }
@@ -92,6 +113,15 @@ export default function mergeSlotProps<
         : [typedDefaultSlotProps.sx]),
       ...(Array.isArray(externalSlotProps.sx) ? externalSlotProps.sx : [externalSlotProps.sx]),
     ];
+  }
+  if (
+    (typedDefaultSlotProps?.ref || externalSlotProps?.ref) &&
+    typedDefaultSlotProps?.ref !== externalSlotProps?.ref
+  ) {
+    result.ref = (value: any) => {
+      setRef(typedDefaultSlotProps?.ref, value);
+      setRef(externalSlotProps?.ref, value);
+    };
   }
   return result as U;
 }

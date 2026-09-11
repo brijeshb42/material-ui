@@ -1037,6 +1037,72 @@ describe('<SwipeableDrawer />', () => {
     },
   );
 
+  it('should forward ref to external slot props ref', () => {
+    const externalRef = React.createRef();
+    render(
+      <SwipeableDrawer
+        onOpen={() => {}}
+        onClose={() => {}}
+        open
+        slotProps={{
+          paper: { ref: externalRef },
+        }}
+      />,
+    );
+
+    expect(externalRef.current).not.to.equal(null);
+    expect(externalRef.current?.tagName).to.exist;
+  });
+
+  it('should work with external ref and internal touch handling when both are provided', () => {
+    if (!supportsTouch()) {
+      return;
+    }
+
+    const externalRef = React.createRef();
+    const handleClose = spy();
+    const handleOpen = spy();
+    const { setProps } = render(
+      <SwipeableDrawer
+        anchor="left"
+        onOpen={handleOpen}
+        onClose={handleClose}
+        open={false}
+        transitionDuration={0}
+        slotProps={{
+          paper: {
+            component: FakePaper,
+            ref: externalRef
+          },
+        }}
+      >
+        <div data-testid="drawer">SwipeableDrawer</div>
+      </SwipeableDrawer>,
+    );
+
+    expect(externalRef.current).not.to.equal(null);
+
+    const swipeArea = document.querySelector('[class*=PrivateSwipeArea-root]');
+
+    fireEvent.touchStart(swipeArea, {
+      touches: [new Touch({ identifier: 0, target: swipeArea, pageX: 0, clientY: 0 })],
+    });
+    fireEvent.touchMove(swipeArea, {
+      touches: [new Touch({ identifier: 0, target: swipeArea, pageX: 20, clientY: 0 })],
+    });
+    fireEvent.touchMove(swipeArea, {
+      touches: [new Touch({ identifier: 0, target: swipeArea, pageX: 180, clientY: 0 })],
+    });
+    fireEvent.touchEnd(swipeArea, {
+      changedTouches: [
+        new Touch({ identifier: 0, target: swipeArea, pageX: 180, clientY: 0 }),
+      ],
+    });
+
+    expect(handleOpen.callCount).to.equal(1);
+    expect(externalRef.current).not.to.equal(null);
+  });
+
   describe('prop: transitionDuration', () => {
     it.skipIf(isJsdom())('should render the default theme values by default', function test() {
       const theme = createTheme();
