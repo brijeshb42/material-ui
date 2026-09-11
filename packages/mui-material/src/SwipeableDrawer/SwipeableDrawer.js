@@ -14,8 +14,17 @@ import { useDefaultProps } from '../DefaultPropsProvider';
 import { getTransitionProps } from '../transitions/utils';
 import useReducedMotion from '../transitions/useReducedMotion';
 import { mergeSlotProps } from '../utils';
+import useForkRef from '../utils/useForkRef';
 import useSlot from '../utils/useSlot';
 import SwipeArea from './SwipeArea';
+
+function omitSlotRef(slotProp) {
+  if (slotProp == null || typeof slotProp === 'function') {
+    return slotProp;
+  }
+  const { ref, ...other } = slotProp;
+  return other;
+}
 
 // This value is closed to what browsers are using internally to
 // trigger a native scroll.
@@ -605,6 +614,17 @@ const SwipeableDrawer = React.forwardRef(function SwipeableDrawer(inProps, ref) 
     },
   });
 
+  // Compose object-form slot refs with useForkRef so React callback-ref cleanups are preserved.
+  // Function-form slotProps still rely on mergeSlotProps ref composition below.
+  const handlePaperRef = useForkRef(
+    paperRef,
+    typeof slotProps.paper !== 'function' ? slotProps.paper?.ref : undefined,
+  );
+  const handleBackdropRef = useForkRef(
+    backdropRef,
+    typeof slotProps.backdrop !== 'function' ? slotProps.backdrop?.ref : undefined,
+  );
+
   return (
     <React.Fragment>
       <Drawer
@@ -626,15 +646,15 @@ const SwipeableDrawer = React.forwardRef(function SwipeableDrawer(inProps, ref) 
         slots={slots}
         slotProps={{
           ...slotProps,
-          backdrop: mergeSlotProps(slotProps.backdrop, {
-            ref: backdropRef,
+          backdrop: mergeSlotProps(omitSlotRef(slotProps.backdrop), {
+            ref: handleBackdropRef,
           }),
-          paper: mergeSlotProps(slotProps.paper, {
+          paper: mergeSlotProps(omitSlotRef(slotProps.paper), {
             style: {
               pointerEvents:
                 variant === 'temporary' && !open && !allowSwipeInChildren ? 'none' : '',
             },
-            ref: paperRef,
+            ref: handlePaperRef,
           }),
         }}
         {...other}

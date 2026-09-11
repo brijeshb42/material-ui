@@ -1,6 +1,57 @@
+import * as React from 'react';
 import { SlotComponentProps } from '@mui/utils/types';
 import isEventHandler from '@mui/utils/isEventHandler';
 import clsx from 'clsx';
+import setRef from './setRef';
+
+function mergeRefProp(
+  defaultRef: React.Ref<unknown> | undefined,
+  externalRef: React.Ref<unknown> | undefined,
+): React.RefCallback<unknown> | React.Ref<unknown> | undefined {
+  if (defaultRef == null) {
+    return externalRef;
+  }
+  if (externalRef == null) {
+    return defaultRef;
+  }
+  return (instance: unknown) => {
+    setRef(defaultRef, instance);
+    setRef(externalRef, instance);
+  };
+}
+
+function finalizeMergedSlotProps(
+  defaultSlotPropsValue: Record<string, any> | undefined,
+  externalSlotPropsValue: Record<string, any> | undefined,
+  handlers: Record<string, Function>,
+  className: string,
+) {
+  const result: Record<string, any> = {
+    ...defaultSlotPropsValue,
+    ...externalSlotPropsValue,
+    ...handlers,
+  };
+  if (className) {
+    result.className = className;
+  }
+  if (defaultSlotPropsValue?.style && externalSlotPropsValue?.style) {
+    result.style = { ...defaultSlotPropsValue.style, ...externalSlotPropsValue.style };
+  }
+  if (defaultSlotPropsValue?.sx && externalSlotPropsValue?.sx) {
+    result.sx = [
+      ...(Array.isArray(defaultSlotPropsValue.sx)
+        ? defaultSlotPropsValue.sx
+        : [defaultSlotPropsValue.sx]),
+      ...(Array.isArray(externalSlotPropsValue.sx)
+        ? externalSlotPropsValue.sx
+        : [externalSlotPropsValue.sx]),
+    ];
+  }
+  if (defaultSlotPropsValue?.ref != null || externalSlotPropsValue?.ref != null) {
+    result.ref = mergeRefProp(defaultSlotPropsValue?.ref, externalSlotPropsValue?.ref);
+  }
+  return result;
+}
 
 export default function mergeSlotProps<
   T extends SlotComponentProps<React.ElementType, {}, {}>,
@@ -47,51 +98,21 @@ export default function mergeSlotProps<
       );
       const handlers = extractHandlers(externalSlotPropsValue, defaultSlotPropsValue);
 
-      const result: Record<string, any> = {
-        ...defaultSlotPropsValue,
-        ...externalSlotPropsValue,
-        ...handlers,
-      };
-      if (className) {
-        result.className = className;
-      }
-      if (defaultSlotPropsValue?.style && externalSlotPropsValue?.style) {
-        result.style = { ...defaultSlotPropsValue.style, ...externalSlotPropsValue.style };
-      }
-      if (defaultSlotPropsValue?.sx && externalSlotPropsValue?.sx) {
-        result.sx = [
-          ...(Array.isArray(defaultSlotPropsValue.sx)
-            ? defaultSlotPropsValue.sx
-            : [defaultSlotPropsValue.sx]),
-          ...(Array.isArray(externalSlotPropsValue.sx)
-            ? externalSlotPropsValue.sx
-            : [externalSlotPropsValue.sx]),
-        ];
-      }
-      return result;
+      return finalizeMergedSlotProps(
+        defaultSlotPropsValue,
+        externalSlotPropsValue,
+        handlers,
+        className,
+      );
     }) as U;
   }
   const typedDefaultSlotProps = defaultSlotProps as Record<string, any>;
   const handlers = extractHandlers(externalSlotProps, typedDefaultSlotProps);
   const className = clsx(typedDefaultSlotProps?.className, externalSlotProps?.className);
-  const result: Record<string, any> = {
-    ...defaultSlotProps,
-    ...externalSlotProps,
-    ...handlers,
-  };
-  if (className) {
-    result.className = className;
-  }
-  if (typedDefaultSlotProps?.style && externalSlotProps?.style) {
-    result.style = { ...typedDefaultSlotProps.style, ...externalSlotProps.style };
-  }
-  if (typedDefaultSlotProps?.sx && externalSlotProps?.sx) {
-    result.sx = [
-      ...(Array.isArray(typedDefaultSlotProps.sx)
-        ? typedDefaultSlotProps.sx
-        : [typedDefaultSlotProps.sx]),
-      ...(Array.isArray(externalSlotProps.sx) ? externalSlotProps.sx : [externalSlotProps.sx]),
-    ];
-  }
-  return result as U;
+  return finalizeMergedSlotProps(
+    typedDefaultSlotProps,
+    externalSlotProps,
+    handlers,
+    className,
+  ) as U;
 }
