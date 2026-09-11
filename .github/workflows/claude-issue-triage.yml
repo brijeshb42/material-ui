@@ -1,0 +1,30 @@
+name: Issue triage
+
+on:
+  issue_comment:
+    types: [created]
+
+permissions: {}
+
+jobs:
+  # Call the reusable workflow with this repository's configuration.
+  triage:
+    # Maximum grant; Claude jobs narrow to contents: read and id-token: write.
+    # The publisher uses GitHub write scopes; authorization/reporting jobs can write issue reactions/comments.
+    permissions:
+      contents: write
+      pull-requests: write
+      issues: write
+      id-token: write
+    uses: mui/mui-public/.github/workflows/claude-triage.yml@617ba1dcec27fdc7b1ec90759dc9b1380b793219
+    with:
+      # Repository-specific configuration passed to the reusable workflow.
+      debug: true # Log Claude output while validating the workflow on this fork.
+      triage-model: claude-haiku-4-5-20251001
+      fix-model: claude-haiku-4-5-20251001
+      triage-max-turns: 60
+      fix-max-turns: 60
+      node-version: 22.23.2
+      setup-command: |
+        pnpm install --frozen-lockfile
+        pnpm release:build
