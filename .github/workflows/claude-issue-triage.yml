@@ -1,262 +1,30 @@
-name: Claude issue triage
+name: Issue triage
 
 on:
   issue_comment:
     types: [created]
-  workflow_dispatch:
-    inputs:
-      issue-number:
-        description: Issue to analyze and attempt to fix inside the runner sandbox
-        required: true
-        type: string
 
 permissions: {}
 
-concurrency:
-  group: claude-triage-${{ github.event.issue.number || inputs.issue-number || github.run_id }}
-  cancel-in-progress: false
-
 jobs:
-  request:
-    runs-on: ubuntu-24.04
-    timeout-minutes: 2
-    permissions:
-      issues: write
-    outputs:
-      accepted: ${{ steps.request.outputs.accepted }}
-      command: ${{ steps.request.outputs.command }}
-      issue-number: ${{ steps.request.outputs.issue-number }}
-      trigger-comment-id: ${{ steps.request.outputs.trigger-comment-id }}
-    steps:
-      - name: Validate and acknowledge the request
-        id: request
-        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
-        env:
-          DISPATCH_ISSUE_NUMBER: ${{ inputs.issue-number }}
-        with:
-          script: |
-            if (context.eventName === 'workflow_dispatch') {
-              const issueNumber = Number(process.env.DISPATCH_ISSUE_NUMBER);
-              if (!Number.isInteger(issueNumber) || issueNumber <= 0) {
-                throw new Error('issue-number must be a positive integer.');
-              }
-              const { data: issue } = await github.rest.issues.get({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                issue_number: issueNumber,
-              });
-              if (issue.pull_request) {
-                throw new Error('Claude issue triage cannot run against a pull request.');
-              }
-              core.setOutput('accepted', 'true');
-              core.setOutput('command', 'fix');
-              core.setOutput('issue-number', String(issueNumber));
-              core.setOutput('trigger-comment-id', `workflow-dispatch-${context.runId}`);
-              return;
-            }
-
-            const issue = context.payload.issue;
-            const comment = context.payload.comment;
-            const association = comment.author_association;
-            const commandMatch = String(comment.body || '').trim().match(/^@claude\s+(triage|fix)$/i);
-            const authorized = ['OWNER', 'MEMBER', 'COLLABORATOR'].includes(association);
-            if (issue.pull_request || !authorized || !commandMatch) {
-              core.setOutput('accepted', 'false');
-              return;
-            }
-
-            await github.rest.reactions.createForIssueComment({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              comment_id: comment.id,
-              content: 'eyes',
-            });
-            core.setOutput('accepted', 'true');
-            core.setOutput('command', commandMatch[1].toLowerCase());
-            core.setOutput('issue-number', String(issue.number));
-            core.setOutput('trigger-comment-id', String(comment.id));
-
+  # Call the reusable workflow with this repository's configuration.
   triage:
-    needs: request
-    if: needs.request.outputs.accepted == 'true' && needs.request.outputs.command == 'triage'
-    runs-on: ubuntu-24.04
-    timeout-minutes: 30
+    # Maximum grant; Claude jobs narrow to contents: read and id-token: write.
+    # The publisher uses GitHub write scopes; authorization/reporting jobs can write issue reactions/comments.
     permissions:
-      contents: read
-      id-token: write
-      issues: read
-    outputs:
-      artifact-name: ${{ steps.triage.outputs.artifact-name }}
-      base-sha: ${{ steps.triage.outputs.base-sha }}
-      disposition: ${{ steps.triage.outputs.disposition }}
-      expires-at: ${{ steps.triage.outputs.expires-at }}
-      should-fix: ${{ steps.triage.outputs.should-fix }}
-    steps:
-      - name: Check out repository without credentials
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          persist-credentials: false
-
-      - name: Capture issue context and create triage artifact
-        id: triage
-        uses: brijeshb42/claude-triage-action/triage@ceebc72542b5e81244866e35a3665b48cd8de61b # triage prototype ceebc725
-        with:
-          anthropic-federation-rule-id: ${{ vars.ANTHROPIC_FEDERATION_RULE_ID }}
-          anthropic-organization-id: ${{ vars.ANTHROPIC_ORGANIZATION_ID }}
-          anthropic-service-account-id: ${{ vars.ANTHROPIC_SERVICE_ACCOUNT_ID }}
-          anthropic-workspace-id: ${{ vars.ANTHROPIC_WORKSPACE_ID }}
-          github-token: ${{ github.token }}
-          issue-number: ${{ needs.request.outputs.issue-number }}
-          trigger-comment-id: ${{ needs.request.outputs.trigger-comment-id }}
-          artifact-name: claude-triage-v1-${{ needs.request.outputs.issue-number }}-${{ github.run_id }}-${{ github.run_attempt }}
-          model: claude-sonnet-4-6
-          reasoning-effort: high
-          max-turns: 60
-          show-full-output: false
-
-  report:
-    needs: [request, triage]
-    if: >-
-      always() &&
-      (needs.triage.result == 'success' || needs.triage.result == 'failure')
-    runs-on: ubuntu-24.04
-    timeout-minutes: 5
-    permissions:
-      actions: read
+      contents: write
+      pull-requests: write
       issues: write
-    steps:
-      - name: Report triage outcome
-        uses: brijeshb42/claude-triage-action/report@ceebc72542b5e81244866e35a3665b48cd8de61b # triage prototype ceebc725
-        with:
-          artifact-name: ${{ needs.triage.outputs.artifact-name }}
-          source-run-id: ${{ github.run_id }}
-          github-token: ${{ github.token }}
-          issue-number: ${{ needs.request.outputs.issue-number }}
-          mode: ${{ needs.triage.outputs.should-fix == 'true' && 'in-progress' || 'complete' }}
-
-  fix:
-    needs: [request, triage]
-    if: >-
-      always() &&
-      needs.request.outputs.accepted == 'true' &&
-      (
-        needs.request.outputs.command == 'fix' ||
-        (needs.triage.result == 'success' && needs.triage.outputs.should-fix == 'true')
-      )
-    runs-on: ubuntu-24.04
-    timeout-minutes: 65
-    permissions:
-      contents: read
       id-token: write
-      issues: read
-    outputs:
-      artifact-name: ${{ steps.fix.outputs.artifact-name }}
-    steps:
-      - name: Check out the trusted fix base without credentials
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          # Automatic handoff retains the analyzed base; explicit fixes use current master.
-          ref: ${{ needs.triage.outputs.base-sha || github.event.repository.default_branch }}
-          persist-credentials: false
-
-      # The runner action captures issue context itself; it does not replay triage artifacts.
-      - name: Analyze and attempt a fix with Claude Code inside gVisor
-        id: fix
-        uses: brijeshb42/claude-triage-action/runner@80a31740f1167e64a52405902ae45c16615d7bad # prebuilt runner 80a3174
-        with:
-          anthropic-federation-rule-id: ${{ vars.ANTHROPIC_FEDERATION_RULE_ID }}
-          anthropic-organization-id: ${{ vars.ANTHROPIC_ORGANIZATION_ID }}
-          anthropic-service-account-id: ${{ vars.ANTHROPIC_SERVICE_ACCOUNT_ID }}
-          anthropic-workspace-id: ${{ vars.ANTHROPIC_WORKSPACE_ID }}
-          github-token: ${{ github.token }}
-          issue-number: ${{ needs.request.outputs.issue-number }}
-          artifact-name: claude-runner-fix-${{ needs.request.outputs.issue-number }}-${{ github.run_id }}-${{ github.run_attempt }}
-          dependency-install-command: pnpm install --frozen-lockfile --prefer-offline
-          repository-node-version: auto
-          dependency-install-timeout-ms: 1200000
-          model: claude-sonnet-4-6
-          reasoning-effort: high
-          max-turns: 200
-          max-api-requests: 400
-          max-output-tokens-per-request: 16384
-          agent-timeout-ms: 1800000
-          snapshot-excludes: docs/public
-
-  fix-failure:
-    needs: [request, fix]
-    if: >-
-      always() &&
-      contains(fromJSON('["failure", "cancelled"]'), needs.fix.result)
-    runs-on: ubuntu-24.04
-    timeout-minutes: 3
-    permissions:
-      issues: write
-    steps:
-      - name: Report fix failure
-        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
-        env:
-          FIX_RESULT: ${{ needs.fix.result }}
-          ISSUE_NUMBER: ${{ needs.request.outputs.issue-number }}
-        with:
-          script: |
-            const marker = '<!-- claude-cloudflare-triage -->';
-            const issue_number = Number(process.env.ISSUE_NUMBER);
-            const outcome = process.env.FIX_RESULT === 'cancelled' ? 'timed out or was cancelled' : 'failed';
-            const failureLine = `**Fix:** The sandboxed fix job ${outcome}. [Open workflow run](${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}).`;
-            const comments = await github.paginate(github.rest.issues.listComments, {
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number,
-              per_page: 100,
-            });
-            const existing = comments.find((comment) => comment.body?.includes(marker));
-            if (existing) {
-              const body = existing.body.match(/^\*\*Fix:\*\*.*$/m)
-                ? existing.body.replace(/^\*\*Fix:\*\*.*$/m, failureLine)
-                : `${existing.body}\n\n${failureLine}`;
-              await github.rest.issues.updateComment({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                comment_id: existing.id,
-                body,
-              });
-            } else {
-              await github.rest.issues.createComment({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                issue_number,
-                body: [marker, '## Claude triage', '', failureLine].join('\n'),
-              });
-            }
-
-  publish:
-    needs: [request, fix]
-    if: always() && needs.fix.result == 'success'
-    runs-on: ubuntu-24.04
-    timeout-minutes: 10
-    permissions:
-      contents: read
-    steps:
-      - name: Create publisher token
-        id: publisher-token
-        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
-        with:
-          client-id: ${{ vars.CLAUDE_TRIAGE_GITHUB_APP_CLIENT_ID }}
-          private-key: ${{ secrets.CLAUDE_TRIAGE_GITHUB_APP_PRIVATE_KEY }}
-          permission-contents: write
-          permission-issues: write
-          permission-pull-requests: write
-
-      - name: Check out the current default branch with publisher credentials
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          ref: ${{ github.event.repository.default_branch }}
-          token: ${{ steps.publisher-token.outputs.token }}
-
-      - name: Validate and publish fix result
-        uses: brijeshb42/claude-triage-action/runner/publish@80a31740f1167e64a52405902ae45c16615d7bad # prebuilt runner 80a3174
-        with:
-          artifact-name: ${{ needs.fix.outputs.artifact-name }}
-          github-token: ${{ steps.publisher-token.outputs.token }}
-          issue-number: ${{ needs.request.outputs.issue-number }}
-          default-branch: ${{ github.event.repository.default_branch }}
+    uses: mui/mui-public/.github/workflows/claude-triage.yml@617ba1dcec27fdc7b1ec90759dc9b1380b793219
+    with:
+      # Repository-specific configuration passed to the reusable workflow.
+      debug: true # Log Claude output while validating the workflow on this fork.
+      triage-model: claude-sonnet-4-6
+      fix-model: claude-sonnet-4-6
+      triage-max-turns: 60
+      fix-max-turns: 60
+      node-version: 22.23.2
+      setup-command: |
+        pnpm install --frozen-lockfile
+        pnpm release:build
