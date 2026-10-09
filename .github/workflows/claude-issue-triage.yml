@@ -49,6 +49,5 @@ jobs:
       issue-number: ${{ github.event.issue.number }}
       mode: ${{ needs.request.outputs.mode }}
       comment-id: ${{ fromJSON(needs.request.outputs.comment-id) }}
-      debug: true # Temporary diagnostic for the failed Claude session.
       triage-model: claude-haiku-5-5
       triage-max-turns: 60
