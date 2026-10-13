@@ -244,5 +244,85 @@ describe('utils/index.js', () => {
       expect(slotPropsFoo.callCount).to.equal(1);
       expect(slotPropsFoo.args[0]).to.deep.equal(['arg1', 'arg2']);
     });
+
+    it('merge refs with both ref objects', () => {
+      const defaultRef = React.createRef<HTMLDivElement>();
+      const externalRef = React.createRef<HTMLDivElement>();
+      const element = document.createElement('div');
+
+      const merged = mergeSlotProps(
+        { ref: externalRef },
+        { ref: defaultRef },
+      );
+
+      // Simulate what React does when rendering
+      if (typeof merged.ref === 'function') {
+        merged.ref(element);
+      } else {
+        merged.ref.current = element;
+      }
+
+      expect(defaultRef.current).to.equal(element);
+      expect(externalRef.current).to.equal(element);
+    });
+
+    it('merge refs with callback functions', () => {
+      const defaultRefCallback = spy();
+      const externalRefCallback = spy();
+      const element = document.createElement('div');
+
+      const merged = mergeSlotProps(
+        { ref: externalRefCallback },
+        { ref: defaultRefCallback },
+      );
+
+      if (typeof merged.ref === 'function') {
+        merged.ref(element);
+      }
+
+      expect(defaultRefCallback.callCount).to.equal(1);
+      expect(defaultRefCallback.args[0][0]).to.equal(element);
+      expect(externalRefCallback.callCount).to.equal(1);
+      expect(externalRefCallback.args[0][0]).to.equal(element);
+    });
+
+    it('merge refs with mixed ref types', () => {
+      const defaultRef = React.createRef<HTMLDivElement>();
+      const externalRefCallback = spy();
+      const element = document.createElement('div');
+
+      const merged = mergeSlotProps(
+        { ref: externalRefCallback },
+        { ref: defaultRef },
+      );
+
+      if (typeof merged.ref === 'function') {
+        merged.ref(element);
+      }
+
+      expect(defaultRef.current).to.equal(element);
+      expect(externalRefCallback.callCount).to.equal(1);
+      expect(externalRefCallback.args[0][0]).to.equal(element);
+    });
+
+    it('merge refs in function slot props', () => {
+      const defaultRef = React.createRef<HTMLDivElement>();
+      const externalRef = React.createRef<HTMLDivElement>();
+      const element = document.createElement('div');
+
+      const merged = mergeSlotProps(
+        () => ({ ref: externalRef }),
+        () => ({ ref: defaultRef }),
+      )();
+
+      if (typeof merged.ref === 'function') {
+        merged.ref(element);
+      } else {
+        merged.ref.current = element;
+      }
+
+      expect(defaultRef.current).to.equal(element);
+      expect(externalRef.current).to.equal(element);
+    });
   });
 });
