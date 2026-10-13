@@ -1,6 +1,14 @@
 import { SlotComponentProps } from '@mui/utils/types';
 import isEventHandler from '@mui/utils/isEventHandler';
+import setRef from '@mui/utils/setRef';
 import clsx from 'clsx';
+
+function composeRefs(refA: any, refB: any) {
+  return (instance: any) => {
+    setRef(refA, instance);
+    setRef(refB, instance);
+  };
+}
 
 export default function mergeSlotProps<
   T extends SlotComponentProps<React.ElementType, {}, {}>,
@@ -68,6 +76,9 @@ export default function mergeSlotProps<
             : [externalSlotPropsValue.sx]),
         ];
       }
+      if (defaultSlotPropsValue?.ref && externalSlotPropsValue?.ref) {
+        result.ref = composeRefs(defaultSlotPropsValue.ref, externalSlotPropsValue.ref);
+      }
       return result;
     }) as U;
   }
@@ -92,6 +103,9 @@ export default function mergeSlotProps<
         : [typedDefaultSlotProps.sx]),
       ...(Array.isArray(externalSlotProps.sx) ? externalSlotProps.sx : [externalSlotProps.sx]),
     ];
+  }
+  if (typedDefaultSlotProps?.ref && externalSlotProps?.ref) {
+    result.ref = composeRefs(typedDefaultSlotProps.ref, externalSlotProps.ref);
   }
   return result as U;
 }
