@@ -244,5 +244,37 @@ describe('utils/index.js', () => {
       expect(slotPropsFoo.callCount).to.equal(1);
       expect(slotPropsFoo.args[0]).to.deep.equal(['arg1', 'arg2']);
     });
+
+    it('composes refs from default and external slot props', () => {
+      const defaultRef = React.createRef<HTMLElement>();
+      const externalRef = React.createRef<HTMLElement>();
+      const element = document.createElement('div');
+
+      const mergedSlotProps = mergeSlotProps<{ ref: React.Ref<HTMLElement> }>(
+        { ref: externalRef },
+        { ref: defaultRef },
+      );
+
+      (mergedSlotProps.ref as React.RefCallback<HTMLElement>)(element);
+
+      expect(defaultRef.current).to.equal(element);
+      expect(externalRef.current).to.equal(element);
+    });
+
+    it('composes refs when slot props are functions', () => {
+      const defaultRef = React.createRef<HTMLElement>();
+      const externalRef = React.createRef<HTMLElement>();
+      const element = document.createElement('div');
+
+      const mergedSlotProps = mergeSlotProps(
+        () => ({ ref: externalRef }),
+        () => ({ ref: defaultRef }),
+      )();
+
+      (mergedSlotProps.ref as React.RefCallback<HTMLElement>)(element);
+
+      expect(defaultRef.current).to.equal(element);
+      expect(externalRef.current).to.equal(element);
+    });
   });
 });
