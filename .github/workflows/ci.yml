@@ -48,7 +48,6 @@ jobs:
         os: [macos-latest, windows-latest, ubuntu-latest]
     permissions:
       contents: read
-      pull-requests: write
     steps:
       - run: echo '${{ github.actor }}'
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -72,6 +71,20 @@ jobs:
             ${{ runner.os }}-nextjs-${{ hashFiles('pnpm-lock.yaml') }}-
             ${{ runner.os }}-nextjs-
       - run: pnpm release:build
+      - name: Publish packages to pkg.pr.new
+        id: publish-packages
+        uses: ./.github/actions/ci-publish
+        if: ${{ matrix.os == 'ubuntu-latest' }}
+      - name: Upload triage preview metadata
+        if: >-
+          matrix.os == 'ubuntu-latest' &&
+          github.event_name == 'pull_request'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: triage-preview-${{ github.event.pull_request.number }}-${{ github.event.pull_request.head.sha }}
+          path: ${{ steps.publish-packages.outputs.metadata-path }}
+          if-no-files-found: error
+          retention-days: 1
       - name: Build docs
         run: pnpm docs:build
         env:
@@ -104,6 +117,221 @@ jobs:
           # Required, set by GitHub actions automatically:
           # https://docs.github.com/en/actions/security-guides/automatic-token-authentication#about-the-github_token-secret
           token: ${{secrets.GITHUB_TOKEN}}
+
+  triage-preview-eligibility:
+    name: Check triage preview eligibility
+    if: github.event_name == 'pull_request'
+    needs: test-dev
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: read
+    outputs:
+      eligible: ${{ steps.check.outputs.eligible }}
+    steps:
+      - name: Check the live pull request
+        id: check
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        env:
+          PUBLISHER_LOGIN: automations-by-brijesh[bot]
+        with:
+          script: |
+            const { data: pullRequest } = await github.rest.pulls.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: context.payload.pull_request.number,
+            });
+            const labels = new Set(pullRequest.labels.map((label) => label.name));
+            const body = String(pullRequest.body || '');
+            const eligible =
+              pullRequest.user?.login === process.env.PUBLISHER_LOGIN &&
+              pullRequest.head.repo?.full_name === `${context.repo.owner}/${context.repo.repo}` &&
+              pullRequest.head.ref.startsWith('claude/triage-') &&
+              labels.has('claude-triage') &&
+              labels.has('claude-triage-preview') &&
+              body.includes('<!-- claude-triage-issue:') &&
+              body.includes('<!-- claude-triage-preview:pending -->');
+            core.setOutput('eligible', String(eligible));
+            if (!eligible) {
+              core.notice('This pull request was not created by the Claude fix publisher.');
+            }
+
+  report-triage-preview:
+    name: Report triage preview
+    if: needs.triage-preview-eligibility.outputs.eligible == 'true'
+    needs: triage-preview-eligibility
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      checks: read
+      contents: read
+      issues: write
+      pull-requests: write
+    steps:
+      - name: Download pkg.pr.new metadata
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: triage-preview-${{ github.event.pull_request.number }}-${{ github.event.pull_request.head.sha }}
+          path: ${{ runner.temp }}/triage-preview
+      - name: Validate and publish the StackBlitz URL
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        env:
+          METADATA_PATH: ${{ runner.temp }}/triage-preview/pkg-pr-new-output.json
+          PREVIEW_DIRECTORY: examples/triage-preview
+          PREVIEW_PACKAGE: material-ui-triage-preview
+        with:
+          script: |
+            const fs = require('fs');
+            const metadata = JSON.parse(fs.readFileSync(process.env.METADATA_PATH, 'utf8'));
+            if (!Array.isArray(metadata.packages) || !Array.isArray(metadata.templates)) {
+              throw new Error('pkg.pr.new metadata does not match the expected schema.');
+            }
+
+            const pullNumber = context.payload.pull_request.number;
+            const eventHeadSha = context.payload.pull_request.head.sha;
+            const { data: pullRequest } = await github.rest.pulls.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: pullNumber,
+            });
+            if (pullRequest.head.sha !== eventHeadSha) {
+              core.notice('Skipping a stale preview result for an older pull request head.');
+              return;
+            }
+
+            const labels = new Set(pullRequest.labels.map((label) => label.name));
+            if (!labels.has('claude-triage') || !labels.has('claude-triage-preview')) {
+              core.notice('The pull request is not a validated triage preview.');
+              return;
+            }
+
+            const files = await github.paginate(github.rest.pulls.listFiles, {
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: pullNumber,
+              per_page: 100,
+            });
+            const previewPrefix = `${process.env.PREVIEW_DIRECTORY}/`;
+            if (!files.some((file) => file.filename.startsWith(previewPrefix))) {
+              throw new Error('The configured preview directory did not change.');
+            }
+
+            const template = metadata.templates.find(
+              (candidate) => candidate?.name === process.env.PREVIEW_PACKAGE,
+            );
+            if (!template || typeof template.url !== 'string') {
+              throw new Error('pkg.pr.new did not generate the configured preview template.');
+            }
+
+            const checkRuns = await github.paginate(github.rest.checks.listForRef, {
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              ref: eventHeadSha,
+              per_page: 100,
+            });
+            const publicationCheck = checkRuns.find(
+              (checkRun) =>
+                checkRun.name === 'Continuous Releases' &&
+                checkRun.app?.slug === 'pkg-pr-new' &&
+                checkRun.conclusion === 'success',
+            );
+            if (!publicationCheck) {
+              throw new Error('The successful pkg.pr.new publication check was not found.');
+            }
+            const { data: resolvedPublicationCheck } = await github.rest.checks.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              check_run_id: publicationCheck.id,
+            });
+            const templateLinePrefix = `- [${process.env.PREVIEW_PACKAGE}](`;
+            const templateLine = String(resolvedPublicationCheck.output.text || '')
+              .split('\n')
+              .find((line) => line.startsWith(templateLinePrefix) && line.endsWith(')'));
+            if (!templateLine) {
+              throw new Error('The pkg.pr.new check did not report the configured preview URL.');
+            }
+            const previewUrl = new URL(templateLine.slice(templateLinePrefix.length, -1));
+            const previewPath = previewUrl.pathname.split('/').filter(Boolean);
+            if (
+              previewUrl.origin !== 'https://pkg.pr.new' ||
+              previewPath.length !== 2 ||
+              previewPath[0] !== 'template' ||
+              previewPath[1].length !== 36 ||
+              ![...previewPath[1]].every((character) =>
+                '0123456789abcdef-'.includes(character),
+              )
+            ) {
+              throw new Error(`Refusing an unexpected preview URL: ${previewUrl.href}`);
+            }
+
+            const shortSha = eventHeadSha.slice(0, 7);
+            const previewLine = `**StackBlitz preview (${shortSha}):** ${previewUrl.href}`;
+            const prMarker = '<!-- claude-triage-preview -->';
+            const prCommentBody = [
+              prMarker,
+              '## Triage preview',
+              '',
+              previewLine,
+              '',
+              'This preview corresponds exactly to the current pull request head. The final commit is disposable and should normally be removed before merge.',
+            ].join('\n');
+            const prComments = await github.paginate(github.rest.issues.listComments, {
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: pullNumber,
+              per_page: 100,
+            });
+            const existingPrComment = prComments.find((comment) => comment.body?.includes(prMarker));
+            if (existingPrComment) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existingPrComment.id,
+                body: prCommentBody,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: pullNumber,
+                body: prCommentBody,
+              });
+            }
+
+            const issueMatch = pullRequest.body?.match(/<!-- claude-triage-issue:(\d+) -->/);
+            if (!issueMatch) {
+              throw new Error('The triage pull request does not identify its source issue.');
+            }
+            const issueNumber = Number(issueMatch[1]);
+            const issueComments = await github.paginate(github.rest.issues.listComments, {
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: issueNumber,
+              per_page: 100,
+            });
+            const triageMarker = '<!-- claude-cloudflare-triage -->';
+            const previewStatusMarker = '<!-- claude-triage-preview-status -->';
+            const triageComment = issueComments.find((comment) => comment.body?.includes(triageMarker));
+            if (triageComment) {
+              const body = triageComment.body.includes(previewStatusMarker)
+                ? triageComment.body.replace(
+                    /<!-- claude-triage-preview-status -->\n[^\n]*/,
+                    `${previewStatusMarker}\n${previewLine}`,
+                  )
+                : `${triageComment.body}\n\n${previewStatusMarker}\n${previewLine}`;
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: triageComment.id,
+                body,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issueNumber,
+                body: `<!-- claude-triage-preview-issue -->\n${previewLine}`,
+              });
+            }
 
   # Mirrors the real publish workflow environment (`publish.yml`) so an env
   # mismatch — e.g. the Node version pinned by `publish-prepare` violating our
